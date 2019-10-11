@@ -1,0 +1,25 @@
+{
+	"name": "three-csm",
+	"version": "1.0.0",
+	"description": "Cascaded shadow mapping (CSM) implementation for three.js",
+	"main": "build/three-csm.js",
+	"module": "build/three-csm.module.js",
+	"scripts": {
+		"build": "rollup -c",
+		"dev": "concurrently \"ws\" \"rollup -c -w\"",
+		"server": "ws"
+	},
+	"keywords": [
+		"three",
+		"three.js",
+		"3d",
+		"shadows"
+	],
+	"author": "vtHawk",
+	"license": "MIT",
+	"devDependencies": {
+		"concurrently": "^4.1.2",
+		"local-web-server": "^3.0.7",
+		"rollup": "^1.23.1"
+	}
+}
