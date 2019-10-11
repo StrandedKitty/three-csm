@@ -4,7 +4,7 @@ Cascaded shadow maps (CSMs) implementation for [Three.js](https://threejs.org/).
 
 ## Examples
 
-- [Basic](http://vthawk.github.io/three-csm/examples/basic)
+- [Basic](http://vthawk.github.io/three-csm/examples/basic/)
 
 ![Cascaded Shadow Maps](https://i.imgur.com/YSvYi2g.png)
 
