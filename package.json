@@ -9,6 +9,10 @@
 		"dev": "concurrently \"ws\" \"rollup -c -w\"",
 		"server": "ws"
 	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/vtHawk/three-csm.git"
+	},
 	"keywords": [
 		"three",
 		"three.js",
