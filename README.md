@@ -61,6 +61,12 @@ mesh.receiveShadow = true;
 scene.add(mesh);
 ```
 
+Finally, in your update loop, call the update function before rendering:
+
+```javascript
+csm.update(camera.matrix);
+```
+
 ## API
 
 ### `CSM`
