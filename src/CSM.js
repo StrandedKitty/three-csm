@@ -21,8 +21,8 @@ export default class CSM {
 		this.lightIntensity = data.lightIntensity || 1;
 		this.lightNear = data.lightNear || 1;
 		this.lightFar = data.lightFar || 2000;
-        this.lightMargin = data.lightMargin || 200;
-        this.customSplitsCallback = data.customSplitsCallback || undefined;
+		this.lightMargin = data.lightMargin || 200;
+		this.customSplitsCallback = data.customSplitsCallback;
 
 		this.lights = [];
 		this.materials = [];
@@ -77,11 +77,11 @@ export default class CSM {
 				break;
 			case 'practical':
 				this.breaks = practicalSplit(this.cascades, this.near, this.far, 0.5);
-                break;
-            case 'custom':
-                if (this.customSplitsCallback === undefined) console.error('CSM: Custom split scheme callback not defined.');
-                this.breaks = this.customSplitsCallback(this.cascades, this.near, this.far);
-                break;
+				break;
+			case 'custom':
+				if(this.customSplitsCallback === undefined) console.error('CSM: Custom split scheme callback not defined.');
+				this.breaks = this.customSplitsCallback(this.cascades, this.near, this.far);
+				break;
 		}
 		
 		function uniformSplit(amount, near, far) {
