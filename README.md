@@ -85,7 +85,7 @@ scene.add(mesh);
 	
 	- `settings.mode` — Defines a split scheme (how large frustum is splitted into smaller ones). Can be `uniform` (linear), `logarithmic`, `practical` or `custom`. For most cases `practical` may be the best choice. Equations used for each scheme can be found in [*GPU Gems 3. Chapter 10*](https://developer.nvidia.com/gpugems/GPUGems3/gpugems3_ch10.html). If mode is set to `custom`, you'll need to define your own `customSplitsCallback`. Optional.
 
-    - `settings.customSplitsCallback` — A callback to compute custom cascade splits when mode is set to `custom`. Callback should accept three number parameters: cascadeAmount, nearDistance, farDistance and return an array of split distances ranging from 0 to 1, where 0 is equal to nearDistance and 1 is equal to farDistance. Check out the official modes in CSM.js to learn how they work.
+    - `settings.customSplitsCallback` — A callback to compute custom cascade splits when mode is set to `custom`. Callback should accept three number parameters: `cascadeAmount`, `nearDistance`, `farDistance` and return an array of split distances ranging from 0 to 1, where 0 is equal to `nearDistance` and 1 is equal to `farDistance`. Check out the official modes in CSM.js to learn how they work.
 	
 	- `settings.shadowMapSize` — Resolution of shadow maps (one per cascade). Optional.
 	
