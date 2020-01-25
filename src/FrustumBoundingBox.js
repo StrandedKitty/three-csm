@@ -13,7 +13,7 @@ export default class FrustumBoundingBox {
 	}
 
 	fromFrustum(frustum) {
-		let vertices = [];
+		const vertices = [];
 
 		for(let i = 0; i < 4; i++) {
 			vertices.push(frustum.vertices.near[i]);

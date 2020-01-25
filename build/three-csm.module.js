@@ -64,10 +64,10 @@ class Frustum {
 	}
 
 	split(breaks) {
-		let result = [];
+		const result = [];
 
 		for(let i = 0; i < breaks.length; i++) {
-			let cascade = new Frustum();
+			const cascade = new Frustum();
 
 			if(i === 0) {
 				cascade.vertices.near = this.vertices.near;
@@ -92,8 +92,8 @@ class Frustum {
 	}
 
 	toSpace(cameraMatrix) {
-		let result = new Frustum();
-		let point = new Vector3();
+		const result = new Frustum();
+		const point = new Vector3();
 
 		for(var i = 0; i < 4; i++) {
 			point.set(this.vertices.near[i].x, this.vertices.near[i].y, this.vertices.near[i].z);
@@ -124,7 +124,7 @@ class FrustumBoundingBox {
 	}
 
 	fromFrustum(frustum) {
-		let vertices = [];
+		const vertices = [];
 
 		for(let i = 0; i < 4; i++) {
 			vertices.push(frustum.vertices.near[i]);
@@ -294,7 +294,6 @@ class CSM {
 		this.createLights();
 		
 		this.getBreaks();
-		
 		this.initCascades();
 		
 		this.injectInclude();
@@ -302,7 +301,7 @@ class CSM {
 
 	createLights() {
 		for(let i = 0; i < this.cascades; i++) {
-			let light = new DirectionalLight(0xffffff, this.lightIntensity);
+			const light = new DirectionalLight(0xffffff, this.lightIntensity);
 			light.castShadow = true;
 			light.shadow.mapSize.width = this.shadowMapSize;
 			light.shadow.mapSize.height = this.shadowMapSize;
@@ -350,30 +349,36 @@ class CSM {
 		}
 		
 		function uniformSplit(amount, near, far) {
-			let r = [];
+			const r = [];
+
 			for(let i = 1; i < amount; i++) {
 				r.push((near + (far - near) * i / amount) / far);
 			}
+
 			r.push(1);
 			return r;
 		}
 		
 		function logarithmicSplit(amount, near, far) {
-			let r = [];
+			const r = [];
+
 			for(let i = 1; i < amount; i++) {
 				r.push((near * (far / near) ** (i / amount)) / far);
 			}
+
 			r.push(1);
 			return r;
 		}
 		
 		function practicalSplit(amount, near, far, lambda) {
-			let log = logarithmicSplit(amount, near, far);
-			let uni = uniformSplit(amount, near, far);
-			let r = [];
+			const log = logarithmicSplit(amount, near, far);
+			const uni = uniformSplit(amount, near, far);
+			const r = [];
+
 			for(let i = 1; i < amount; i++) {
 				r.push(lambda * log[i - 1] + (1 - lambda) * uni[i - 1]);
 			}
+
 			r.push(1);
 			return r;
 		}
@@ -381,28 +386,28 @@ class CSM {
 
 	update(cameraMatrix) {
 		for(let i = 0; i < this.frustums.length; i++) {
-			let worldSpaceFrustum = this.frustums[i].toSpace(cameraMatrix);
+			const worldSpaceFrustum = this.frustums[i].toSpace(cameraMatrix);
+			const light = this.lights[i];
+			const lightSpaceFrustum = worldSpaceFrustum.toSpace(light.shadow.camera.matrixWorldInverse);
 
-			let light = this.lights[i];
 			light.shadow.camera.updateMatrixWorld(true);
-			let lightSpaceFrustum = worldSpaceFrustum.toSpace(light.shadow.camera.matrixWorldInverse);
 
-			let bb = new FrustumBoundingBox().fromFrustum(lightSpaceFrustum);
-			bb.getSize();
-			bb.getCenter(this.lightMargin);
+			const bbox = new FrustumBoundingBox().fromFrustum(lightSpaceFrustum);
+			bbox.getSize();
+			bbox.getCenter(this.lightMargin);
 
-			let squaredBBWidth = Math.max(bb.size.x, bb.size.y);
+			const squaredBBWidth = Math.max(bbox.size.x, bbox.size.y);
 
-			let p = new Vector3(bb.center.x, bb.center.y, bb.center.z);
-			p.applyMatrix4(light.shadow.camera.matrixWorld);
+			let center = new Vector3(bbox.center.x, bbox.center.y, bbox.center.z);
+			center.applyMatrix4(light.shadow.camera.matrixWorld);
 
 			light.shadow.camera.left = -squaredBBWidth / 2;
 			light.shadow.camera.right = squaredBBWidth / 2;
 			light.shadow.camera.top = squaredBBWidth / 2;
 			light.shadow.camera.bottom = -squaredBBWidth / 2;
 
-			light.position.set(p.x, p.y, p.z);
-			light.target.position.set(p.x, p.y, p.z);
+			light.position.copy(center);
+			light.target.position.copy(center);
 
 			light.target.position.x += this.lightDirection.x;
 			light.target.position.y += this.lightDirection.y;
@@ -423,14 +428,15 @@ class CSM {
 		material.defines.USE_CSM = 1;
 		material.defines.CSM_CASCADES = this.cascades;
 		
-		let breaksVec2 = [];
+		const breaksVec2 = [];
+
 		for(let i = 0; i < this.cascades; i++) {
 			let amount = this.breaks[i];
 			let prev = this.breaks[i - 1] || 0;
 			breaksVec2.push(new Vector2(prev, amount));
 		}
 		
-		let self = this;
+		const self = this;
 		
 		material.onBeforeCompile = function (shader) {
 			shader.uniforms.CSM_cascades = {value: breaksVec2};
@@ -451,11 +457,13 @@ class CSM {
 	
 	getExtendedBreaks() {
 		let breaksVec2 = [];
+
 		for(let i = 0; i < this.cascades; i++) {
 			let amount = this.breaks[i];
 			let prev = this.breaks[i - 1] || 0;
 			breaksVec2.push(new Vector2(prev, amount));
 		}
+
 		return breaksVec2;
 	}
 	
@@ -473,32 +481,39 @@ class CSM {
 	helper(cameraMatrix) {
 		let frustum;
 		let geometry;
-		let material = new LineBasicMaterial({color: 0xffffff});
-		let object = new Object3D();
+		const material = new LineBasicMaterial({color: 0xffffff});
+		const object = new Object3D();
 		
 		for(let i = 0; i < this.frustums.length; i++) {
 			frustum = this.frustums[i].toSpace(cameraMatrix);
 			
 			geometry = new Geometry();
+
 			for(let i = 0; i < 5; i++) {
-				let point = frustum.vertices.near[i === 4 ? 0 : i];
+				const point = frustum.vertices.near[i === 4 ? 0 : i];
 				geometry.vertices.push(new Vector3(point.x, point.y, point.z));
 			}
+
 			object.add(new Line(geometry, material));
 			
 			geometry = new Geometry();
+
 			for(let i = 0; i < 5; i++) {
-				let point = frustum.vertices.far[i === 4 ? 0 : i];
+				const point = frustum.vertices.far[i === 4 ? 0 : i];
 				geometry.vertices.push(new Vector3(point.x, point.y, point.z));
 			}
+
 			object.add(new Line(geometry, material));
 			
 			for(let i = 0; i < 4; i++) {
 				geometry = new Geometry();
-				let near = frustum.vertices.near[i];
-				let far = frustum.vertices.far[i];
+
+				const near = frustum.vertices.near[i];
+				const far = frustum.vertices.far[i];
+
 				geometry.vertices.push(new Vector3(near.x, near.y, near.z));
 				geometry.vertices.push(new Vector3(far.x, far.y, far.z));
+
 				object.add(new Line(geometry, material));
 			}
 		}

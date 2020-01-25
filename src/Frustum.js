@@ -46,10 +46,10 @@ export default class Frustum {
 	}
 
 	split(breaks) {
-		let result = [];
+		const result = [];
 
 		for(let i = 0; i < breaks.length; i++) {
-			let cascade = new Frustum();
+			const cascade = new Frustum();
 
 			if(i === 0) {
 				cascade.vertices.near = this.vertices.near;
@@ -74,8 +74,8 @@ export default class Frustum {
 	}
 
 	toSpace(cameraMatrix) {
-		let result = new Frustum();
-		let point = new THREE.Vector3();
+		const result = new Frustum();
+		const point = new THREE.Vector3();
 
 		for(var i = 0; i < 4; i++) {
 			point.set(this.vertices.near[i].x, this.vertices.near[i].y, this.vertices.near[i].z);
