@@ -36,7 +36,7 @@ THREE.CSM = CSM;
 ## Basic usage
 
 ```javascript
-let camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000 );
+let camera = new THREE.PerspectiveCamera(70, window.innerWidth / window.innerHeight, 0.1, 1000);
 let renderer = new THREE.WebGLRenderer();
 
 renderer.shadowMap.enabled = true;
@@ -51,7 +51,7 @@ let csm = new THREE.CSM({
 	parent: scene
 });
 
-let material = new THREE.MeshPhongMaterial(); // or any other type of material
+let material = new THREE.MeshPhongMaterial(); // works with Phong and Standard materials
 csm.setupMaterial(material); // must be called to pass all CSM-related uniforms to the shader
 
 let mesh = new THREE.Mesh(new THREE.BoxBufferGeometry(), material);
