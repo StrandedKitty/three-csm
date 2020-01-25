@@ -16,13 +16,15 @@
 			}
 		</style>
 	</head>
+
 	<body>
 		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/109/three.min.js"></script>
 		<script src="OrbitControls.js"></script>
 		<script src="dat.gui.min.js"></script>
 		<script src="../../build/three-csm.js"></script>
+
 		<script>
-			let renderer, scene, camera, controls, csm, gui;
+			var renderer, scene, camera, controls, csm;
 
 			init();
 			animate();
@@ -44,10 +46,10 @@
 				controls.target = new THREE.Vector3( -100, 10, 0 );
 				controls.update();
 
-				const ambientLight = new THREE.AmbientLight( 0xffffff, 0.5 );
+				var ambientLight = new THREE.AmbientLight( 0xffffff, 0.5 );
 				scene.add( ambientLight );
 
-				const params = {
+				var params = {
 					far: 1000,
 					mode: 'practical',
 					lightX: - 1,
@@ -57,8 +59,10 @@
 					lightFar: 5000,
 					lightNear: 1,
 					helper: function () {
-						const helper = csm.helper( camera.matrix );
+
+						var helper = csm.helper( camera.matrix );
 						scene.add( helper );
+
 					}
 				};
 
@@ -73,102 +77,128 @@
 					shadowMapSize: 1024,
 					lightDirection: new THREE.Vector3( params.lightX, params.lightY, params.lightZ ).normalize(),
 					camera: camera
-				});
+				} );
 
-				const floorMaterial = new THREE.MeshPhongMaterial( { color: '#252a34' } );
+				var floorMaterial = new THREE.MeshPhongMaterial( { color: '#252a34' } );
 				csm.setupMaterial( floorMaterial );
 
-				const floor = new THREE.Mesh( new THREE.PlaneBufferGeometry( 10000, 10000 ), floorMaterial );
+				var floor = new THREE.Mesh( new THREE.PlaneBufferGeometry( 10000, 10000 ), floorMaterial );
 				floor.rotation.x = - Math.PI / 2;
 				floor.castShadow = true;
 				floor.receiveShadow = true;
 				scene.add( floor );
 
-				const material1 = new THREE.MeshPhongMaterial( { color: '#08d9d6' } );
+				var material1 = new THREE.MeshPhongMaterial( { color: '#08d9d6' } );
 				csm.setupMaterial( material1 );
 
-				const material2 = new THREE.MeshPhongMaterial( { color: '#ff2e63' } );
+				var material2 = new THREE.MeshPhongMaterial( { color: '#ff2e63' } );
 				csm.setupMaterial( material2 );
 
-				const geometry = new THREE.BoxBufferGeometry( 10, 10, 10 );
+				var geometry = new THREE.BoxBufferGeometry( 10, 10, 10 );
 
-				for ( let i = 0; i < 40; i++ ) {
-					const cube1 = new THREE.Mesh( geometry, i % 2 === 0 ? material1 : material2 );
+				for ( var i = 0; i < 40; i ++ ) {
+
+					var cube1 = new THREE.Mesh( geometry, i % 2 === 0 ? material1 : material2 );
 					cube1.castShadow = true;
 					cube1.receiveShadow = true;
 					scene.add( cube1 );
 					cube1.position.set( - i * 25, 20, 30 );
 					cube1.scale.y = Math.random() * 2 + 6;
 
-					const cube2 = new THREE.Mesh( geometry, i % 2 === 0 ? material2 : material1 );
+					var cube2 = new THREE.Mesh( geometry, i % 2 === 0 ? material2 : material1 );
 					cube2.castShadow = true;
 					cube2.receiveShadow = true;
 					scene.add( cube2 );
 					cube2.position.set( - i * 25, 20, - 30 );
 					cube2.scale.y = Math.random() * 2 + 6;
+
 				}
 
-				gui = new dat.gui.GUI();
+				var gui = new dat.gui.GUI();
 
 				gui.add( params, 'far', 1, 5000 ).step( 1 ).name( 'shadow far' ).onChange( function ( value ) {
+
 					csm.far = value;
 					csm.updateFrustums();
-				});
+
+				} );
 
 				gui.add( params, 'mode', [ 'uniform', 'logarithmic', 'practical' ] ).name( 'frustum split mode' ).onChange( function ( value ) {
+
 					csm.mode = value;
 					csm.updateFrustums();
-				});
+
+				} );
 
 				gui.add( params, 'lightX', - 1, 1 ).name( 'light direction x' ).onChange( function ( value ) {
+
 					csm.lightDirection.x = value;
-				});
+
+				} );
 
 				gui.add( params, 'lightY', - 1, 1 ).name( 'light direction y' ).onChange( function ( value ) {
+
 					csm.lightDirection.y = value;
-				});
+
+				} );
 
 				gui.add( params, 'lightZ', - 1, 1 ).name( 'light direction z' ).onChange( function ( value ) {
+
 					csm.lightDirection.z = value;
-				});
+
+				} );
 
 				gui.add( params, 'margin', 0, 200 ).name( 'light margin' ).onChange( function ( value ) {
+
 					csm.lightMargin = value;
-				});
+
+				} );
 
 				gui.add( params, 'lightNear', 1, 10000 ).name( 'light near' ).onChange( function ( value ) {
-					for ( let i = 0; i < csm.lights.length; i++ ) {
+
+					for ( var i = 0; i < csm.lights.length; i ++ ) {
+
 						csm.lights[ i ].shadow.camera.near = value;
 						csm.lights[ i ].shadow.camera.updateProjectionMatrix();
+
 					}
-				});
+
+				} );
 
 				gui.add( params, 'lightFar', 1, 10000 ).name( 'light far' ).onChange( function ( value ) {
-					for ( let i = 0; i < csm.lights.length; i++ ) {
+
+					for ( var i = 0; i < csm.lights.length; i ++ ) {
+
 						csm.lights[ i ].shadow.camera.far = value;
 						csm.lights[ i ].shadow.camera.updateProjectionMatrix();
+
 					}
-				});
+
+				} );
 
 				gui.add( params, 'helper' ).name( 'add frustum helper' );
 
 				window.addEventListener( 'resize', function () {
+
 					camera.aspect = window.innerWidth / window.innerHeight;
 					camera.updateProjectionMatrix();
 
 					csm.setAspect( camera.aspect );
 
 					renderer.setSize( window.innerWidth, window.innerHeight );
+
 				}, false);
 			}
 
 			function animate() {
+
 				requestAnimationFrame( animate );
 
 				csm.update( camera.matrix );
 				controls.update();
 
 				renderer.render( scene, camera );
+
 			}
 		</script>
 	</body>
