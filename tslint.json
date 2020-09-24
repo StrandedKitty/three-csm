@@ -1,0 +1,20 @@
+{
+  "linterOptions": {
+    "exclude": [
+      "src/fonts/*.json"
+    ]
+  },
+  "extends": "tslint-config-standard",
+  "rules": {
+    "no-empty": false,
+    "deprecation": false,
+    "strict-type-predicates": false,
+    "trailing-comma": [
+      true,
+      {
+        "multiline": "always",
+        "singleline": "never"
+      }
+    ]
+  }
+}

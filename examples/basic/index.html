@@ -85,15 +85,13 @@
 				var ambientLight = new THREE.AmbientLight( 0xffffff, 0.5 );
 				scene.add( ambientLight );
 
-				csm = new THREE.CSM({
+				csm = new THREE.CSM(camera, scene, {
 					maxFar: params.far,
 					cascades: 4,
 					mode: params.mode,
-					parent: scene,
 					shadowMapSize: 1024,
 					lightDirection: new THREE.Vector3( params.lightX, params.lightY, params.lightZ ).normalize(),
-					camera: camera
-				} );
+				});
 
 				csm.fade = true;
 

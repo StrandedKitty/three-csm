@@ -1,7 +1,6 @@
-import {ShaderChunk} from 'three';
+import { ShaderChunk } from 'three'
 
-export default {
-	lights_fragment_begin: /* glsl */`
+export const lights_fragment_begin = `
 GeometricContext geometry;
 geometry.position = - vViewPosition;
 geometry.normal = normal;
@@ -146,12 +145,12 @@ IncidentLight directLight;
 	vec3 radiance = vec3( 0.0 );
 	vec3 clearcoatRadiance = vec3( 0.0 );
 #endif
-`,
-	lights_pars_begin: /* glsl */`
+`
+export const lights_pars_begin = `
 #if defined( USE_CSM ) && defined( CSM_CASCADES )
 uniform vec2 CSM_cascades[CSM_CASCADES];
 uniform float cameraNear;
 uniform float shadowFar;
 #endif
-	` + ShaderChunk.lights_pars_begin
-};
+${ShaderChunk.lights_pars_begin}
+`

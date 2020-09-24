@@ -1,7 +1,11 @@
 let pkg = require('./package.json');
+import typescript from 'rollup-plugin-typescript'
 
 export default {
-	input: 'src/CSM.js',
+	input: 'src/CSM.ts',
+	plugins: [
+		typescript()
+	],
 	output: [{
 		file: pkg.main,
 		format: 'umd',
