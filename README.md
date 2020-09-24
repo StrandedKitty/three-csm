@@ -1,3 +1,6 @@
+# Typescript conversion of [vHawk/three-csm](https://github.com/vHawk/three-csm)
+Original readme remains below
+
 # three-csm
 
 Cascaded shadow maps (CSMs) implementation for [Three.js](https://threejs.org/). This approach provides higher resolution of shadows near the camera and lower resolution far away by using several shadow maps. CSMs are usually used for shadows cast by the sun over a large terrain.
