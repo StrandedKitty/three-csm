@@ -23,14 +23,14 @@ class CSM {
   private lightNear: number
   private lightFar: number
   private lightMargin: number
-  private customSplitsCallback: (cascades: number, near: number, far: number, breaks: number[]) => void
+  private customSplitsCallback?: (cascades: number, near: number, far: number, breaks: number[]) => void
 
   private fade = false
   public mainFrustum = new Frustum()
   public frustums: Frustum[] = []
   private breaks: number[] = []
 
-  public lights = []
+  public lights: THREE.DirectionalLight[] = []
   private shaders = new Map()
 
   constructor (public camera: THREE.PerspectiveCamera | THREE.OrthographicCamera, private parent: THREE.Object3D, args: {
@@ -146,8 +146,11 @@ class CSM {
         break
 
       case 'custom':
-        if (this.customSplitsCallback === undefined) console.error('CSM: Custom split scheme callback not defined.')
-        this.customSplitsCallback(this.cascades, camera.near, far, this.breaks)
+        if (this.customSplitsCallback !== undefined) {
+          this.customSplitsCallback(this.cascades, camera.near, far, this.breaks)
+        } else {
+          console.error('CSM: Custom split scheme callback not defined.')
+        }
         break
     }
   }
