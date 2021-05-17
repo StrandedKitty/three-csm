@@ -35,7 +35,9 @@ class Frustum {
 
 		const isOrthographic = projectionMatrix.elements[ 2 * 4 + 3 ] === 0;
 
-		inverseProjectionMatrix.getInverse( projectionMatrix );
+
+		inverseProjectionMatrix.copy(projectionMatrix).invert();
+
 
 		// 3 --- 0  vertices.near/far order
 		// |     |
