@@ -7,12 +7,12 @@ import {
 	Matrix4,
 	Box3
 } from 'three';
-import Frustum from './Frustum.js';
-import Shader from './Shader.js';
-import {CSMHelper} from './CSMHelper';
+import CSMFrustum from './CSMFrustum.js';
+import { CSMShader } from './CSMShader.js';
+import { CSMHelper } from './CSMHelper.js';
 
 const _cameraToLightMatrix = new Matrix4();
-const _lightSpaceFrustum = new Frustum();
+const _lightSpaceFrustum = new CSMFrustum();
 const _center = new Vector3();
 const _bbox = new Box3();
 const _uniformArray = [];
@@ -30,7 +30,7 @@ class CSM {
 		this.maxFar = data.maxFar || 100000;
 		this.mode = data.mode || 'practical';
 		this.shadowMapSize = data.shadowMapSize || 2048;
-		this.shadowBias = data.shadowBias || 0.000001;
+		this.shadowBias = data.shadowBias || 0;
 		this.lightDirection = data.lightDirection || new Vector3( 1, - 1, 1 ).normalize();
 		this.lightIntensity = data.lightIntensity || 1;
 		this.lightNear = data.lightNear || 1;
@@ -38,7 +38,7 @@ class CSM {
 		this.lightMargin = data.lightMargin || 200;
 		this.customSplitsCallback = data.customSplitsCallback;
 		this.fade = false;
-		this.mainFrustum = new Frustum();
+		this.mainFrustum = new CSMFrustum();
 		this.frustums = [];
 		this.breaks = [];
 
@@ -62,7 +62,6 @@ class CSM {
 
 			light.shadow.camera.near = this.lightNear;
 			light.shadow.camera.far = this.lightFar;
-			light.shadow.bias = this.shadowBias;
 
 			this.parent.add( light );
 			this.parent.add( light.target );
@@ -125,6 +124,8 @@ class CSM {
 			shadowCam.top = squaredBBWidth / 2;
 			shadowCam.bottom = - squaredBBWidth / 2;
 			shadowCam.updateProjectionMatrix();
+
+			light.shadow.bias = this.shadowBias * squaredBBWidth;
 
 		}
 
@@ -240,8 +241,8 @@ class CSM {
 
 	injectInclude() {
 
-		ShaderChunk.lights_fragment_begin = Shader.lights_fragment_begin;
-		ShaderChunk.lights_pars_begin = Shader.lights_pars_begin;
+		ShaderChunk.lights_fragment_begin = CSMShader.lights_fragment_begin;
+		ShaderChunk.lights_pars_begin = CSMShader.lights_pars_begin;
 
 	}
 
@@ -258,21 +259,22 @@ class CSM {
 		}
 
 		const breaksVec2 = [];
-		const self = this;
+		const scope = this;
 		const shaders = this.shaders;
 
 		material.onBeforeCompile = function ( shader ) {
 
-			const far = Math.min( self.camera.far, self.maxFar );
-			self.getExtendedBreaks( breaksVec2 );
+			const far = Math.min( scope.camera.far, scope.maxFar );
+			scope.getExtendedBreaks( breaksVec2 );
 
 			shader.uniforms.CSM_cascades = { value: breaksVec2 };
-			shader.uniforms.cameraNear = { value: self.camera.near };
+			shader.uniforms.cameraNear = { value: scope.camera.near };
 			shader.uniforms.shadowFar = { value: far };
 
 			shaders.set( material, shader );
 
 		};
+
 		shaders.set( material, null );
 
 	}
@@ -316,12 +318,13 @@ class CSM {
 			target.push( new Vector2() );
 
 		}
+
 		target.length = this.breaks.length;
 
 		for ( let i = 0; i < this.cascades; i ++ ) {
 
-			let amount = this.breaks[ i ];
-			let prev = this.breaks[ i - 1 ] || 0;
+			const amount = this.breaks[ i ];
+			const prev = this.breaks[ i - 1 ] || 0;
 			target[ i ].x = prev;
 			target[ i ].y = amount;
 
@@ -358,9 +361,13 @@ class CSM {
 			delete material.defines.CSM_CASCADES;
 			delete material.defines.CSM_FADE;
 
-			delete shader.uniforms.CSM_cascades;
-			delete shader.uniforms.cameraNear;
-			delete shader.uniforms.shadowFar;
+			if ( shader !== null ) {
+
+				delete shader.uniforms.CSM_cascades;
+				delete shader.uniforms.cameraNear;
+				delete shader.uniforms.shadowFar;
+
+			}
 
 			material.needsUpdate = true;
 

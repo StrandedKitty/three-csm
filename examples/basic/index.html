@@ -18,7 +18,7 @@
 	</head>
 
 	<body>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.js"></script>
 		<script src="OrbitControls.js"></script>
 		<script src="dat.gui.min.js"></script>
 		<script src="../../build/three-csm.js"></script>
@@ -37,6 +37,7 @@
 				margin: 100,
 				lightFar: 5000,
 				lightNear: 1,
+				shadowBias: 0,
 				autoUpdateHelper: true,
 				updateHelper: function () {
 
@@ -92,7 +93,8 @@
 					parent: scene,
 					shadowMapSize: 1024,
 					lightDirection: new THREE.Vector3( params.lightX, params.lightY, params.lightZ ).normalize(),
-					camera: camera
+					camera: camera,
+					shadowBias: params.shadowBias
 				} );
 
 				csm.fade = true;
@@ -136,7 +138,7 @@
 
 				}
 
-				var gui = new dat.gui.GUI();
+				var gui = new dat.gui.GUI({ width: 400 });
 
 				gui.add( params, 'orthographic' ).onChange( function ( value ) {
 
@@ -209,6 +211,13 @@
 						csm.lights[ i ].shadow.camera.updateProjectionMatrix();
 
 					}
+
+				} );
+
+				gui.add( params, 'shadowBias', -0.000005, 0.000005 ).name( 'shadow bias' ).step( 0.000001 ).onChange( function ( value ) {
+
+					csm.shadowBias = value;
+					csm.updateFrustums();
 
 				} );
 
