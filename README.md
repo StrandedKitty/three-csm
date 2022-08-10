@@ -93,7 +93,7 @@ csm.update(camera.matrix);
 	
 	- `settings.shadowMapSize` — Resolution of shadow maps (one per cascade). Optional.
 	
-	- `settings.shadowBias` — Same as [THREE.LightShadow.bias](https://threejs.org/docs/#api/en/lights/shadows/LightShadow.bias). Optional.
+	- `settings.shadowBias` — Serves the same purpose as [THREE.LightShadow.bias](https://threejs.org/docs/#api/en/lights/shadows/LightShadow.bias), but most likely you will need to use much smaller values. Optional.
 	
 	- `settings.lightIntensity` — Same as [THREE.DirectionalLight.intensity](https://threejs.org/docs/#api/en/lights/DirectionalLight). Optional.
 	
