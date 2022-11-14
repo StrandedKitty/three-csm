@@ -913,6 +913,12 @@ uniform float shadowFar;
 			} );
 			shaders.clear();
 
+			for ( let i = 0; i < this.lights.length; i ++ ) {
+
+				this.lights[ i ].dispose();
+
+			}
+
 		}
 
 	}
