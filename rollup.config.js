@@ -1,7 +1,9 @@
 let pkg = require('./package.json');
+import typescript from '@rollup/plugin-typescript';
+import eslint from '@rollup/plugin-eslint';
 
 export default {
-	input: 'src/CSM.js',
+	input: 'src/CSM.ts',
 	output: [{
 		file: pkg.main,
 		format: 'umd',
@@ -10,8 +12,7 @@ export default {
 			'three': 'THREE'
 		},
 		indent: '\t'
-	},
-	{
+	}, {
 		file: pkg.module,
 		format: 'esm',
 		globals: {
@@ -21,5 +22,6 @@ export default {
 	}],
 	external: [
 		'three'
-	]
+	],
+	plugins: [eslint({fix: true}), typescript()]
 };

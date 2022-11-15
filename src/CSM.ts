@@ -5,11 +5,56 @@ import {
 	MathUtils,
 	ShaderChunk,
 	Matrix4,
-	Box3
+	Box3,
+	Object3D,
+	Material,
+	Shader,
+	PerspectiveCamera
 } from 'three';
-import CSMFrustum from './CSMFrustum.js';
-import { CSMShader } from './CSMShader.js';
-import { CSMHelper } from './CSMHelper.js';
+import CSMShader from './CSMShader';
+import CSMHelper from './CSMHelper';
+import CSMFrustum from './CSMFrustum';
+
+function uniformSplit( amount: number, near: number, far: number, target: number[] ) {
+
+	for ( let i = 1; i < amount; i ++ ) {
+
+		target.push( ( near + ( far - near ) * i / amount ) / far );
+
+	}
+
+	target.push( 1 );
+
+}
+
+function logarithmicSplit( amount: number, near: number, far: number, target: number[] ) {
+
+	for ( let i = 1; i < amount; i ++ ) {
+
+		target.push( ( near * ( far / near ) ** ( i / amount ) ) / far );
+
+	}
+
+	target.push( 1 );
+
+}
+
+function practicalSplit( amount: number, near: number, far: number, lambda: number, target: number[] ) {
+
+	_uniformArray.length = 0;
+	_logArray.length = 0;
+	logarithmicSplit( amount, near, far, _logArray );
+	uniformSplit( amount, near, far, _uniformArray );
+
+	for ( let i = 1; i < amount; i ++ ) {
+
+		target.push( MathUtils.lerp( _uniformArray[ i - 1 ], _logArray[ i - 1 ], lambda ) );
+
+	}
+
+	target.push( 1 );
+
+}
 
 const _cameraToLightMatrix = new Matrix4();
 const _lightSpaceFrustum = new CSMFrustum();
@@ -18,11 +63,45 @@ const _bbox = new Box3();
 const _uniformArray = [];
 const _logArray = [];
 
+interface Params {
+	camera: PerspectiveCamera;
+	parent: Object3D;
+	cascades?: number;
+	maxFar?: number;
+	mode?: 'uniform' | 'logarithmic' | 'practical' | 'custom';
+	shadowMapSize?: number;
+	shadowBias?: number;
+	lightDirection?: Vector3;
+	lightIntensity?: number;
+	lightNear?: number;
+	lightFar?: number;
+	lightMargin?: number;
+	customSplitsCallback?: ( cascadeCount, nearDistance, farDistance ) => number[];
+}
+
 class CSM {
 
-	constructor( data ) {
+	public camera: PerspectiveCamera;
+	public parent: Object3D;
+	public cascades: number;
+	public maxFar: number;
+	public mode: string;
+	public shadowMapSize: number;
+	public shadowBias: number;
+	public lightDirection: Vector3;
+	public lightIntensity: number;
+	public lightNear: number;
+	public lightFar: number;
+	public lightMargin: number;
+	public customSplitsCallback: ( cascadeCount, nearDistance, farDistance ) => number[];
+	public fade = false;
+	public mainFrustum: CSMFrustum = new CSMFrustum();
+	public frustums: CSMFrustum[] = [];
+	public breaks: number[] = [];
+	public lights: DirectionalLight[] = [];
+	private readonly shaders: Map<Material, Shader> = new Map();
 
-		data = data || {};
+	public constructor( data: Params ) {
 
 		this.camera = data.camera;
 		this.parent = data.parent;
@@ -37,13 +116,6 @@ class CSM {
 		this.lightFar = data.lightFar || 2000;
 		this.lightMargin = data.lightMargin || 200;
 		this.customSplitsCallback = data.customSplitsCallback;
-		this.fade = false;
-		this.mainFrustum = new CSMFrustum();
-		this.frustums = [];
-		this.breaks = [];
-
-		this.lights = [];
-		this.shaders = new Map();
 
 		this.createLights();
 		this.updateFrustums();
@@ -51,7 +123,7 @@ class CSM {
 
 	}
 
-	createLights() {
+	private createLights() {
 
 		for ( let i = 0; i < this.cascades; i ++ ) {
 
@@ -71,7 +143,7 @@ class CSM {
 
 	}
 
-	initCascades() {
+	private initCascades() {
 
 		const camera = this.camera;
 		camera.updateProjectionMatrix();
@@ -80,7 +152,7 @@ class CSM {
 
 	}
 
-	updateShadowBounds() {
+	private updateShadowBounds() {
 
 		const frustums = this.frustums;
 		for ( let i = 0; i < frustums.length; i ++ ) {
@@ -131,7 +203,7 @@ class CSM {
 
 	}
 
-	getBreaks() {
+	private updateBreaks() {
 
 		const camera = this.camera;
 		const far = Math.min( camera.far, this.maxFar );
@@ -150,55 +222,14 @@ class CSM {
 				break;
 			case 'custom':
 				if ( this.customSplitsCallback === undefined ) console.error( 'CSM: Custom split scheme callback not defined.' );
-				this.customSplitsCallback( this.cascades, camera.near, far, this.breaks );
+				this.breaks.push( ...this.customSplitsCallback( this.cascades, camera.near, far ) );
 				break;
-
-		}
-
-		function uniformSplit( amount, near, far, target ) {
-
-			for ( let i = 1; i < amount; i ++ ) {
-
-				target.push( ( near + ( far - near ) * i / amount ) / far );
-
-			}
-
-			target.push( 1 );
-
-		}
-
-		function logarithmicSplit( amount, near, far, target ) {
-
-			for ( let i = 1; i < amount; i ++ ) {
-
-				target.push( ( near * ( far / near ) ** ( i / amount ) ) / far );
-
-			}
-
-			target.push( 1 );
-
-		}
-
-		function practicalSplit( amount, near, far, lambda, target ) {
-
-			_uniformArray.length = 0;
-			_logArray.length = 0;
-			logarithmicSplit( amount, near, far, _logArray );
-			uniformSplit( amount, near, far, _uniformArray );
-
-			for ( let i = 1; i < amount; i ++ ) {
-
-				target.push( MathUtils.lerp( _uniformArray[ i - 1 ], _logArray[ i - 1 ], lambda ) );
-
-			}
-
-			target.push( 1 );
 
 		}
 
 	}
 
-	update() {
+	public update() {
 
 		const camera = this.camera;
 		const frustums = this.frustums;
@@ -239,14 +270,14 @@ class CSM {
 
 	}
 
-	injectInclude() {
+	private injectInclude() {
 
 		ShaderChunk.lights_fragment_begin = CSMShader.lights_fragment_begin;
 		ShaderChunk.lights_pars_begin = CSMShader.lights_pars_begin;
 
 	}
 
-	setupMaterial( material ) {
+	public setupMaterial( material: Material ) {
 
 		material.defines = material.defines || {};
 		material.defines.USE_CSM = 1;
@@ -259,16 +290,15 @@ class CSM {
 		}
 
 		const breaksVec2 = [];
-		const scope = this;
 		const shaders = this.shaders;
 
-		material.onBeforeCompile = function ( shader ) {
+		material.onBeforeCompile = ( shader ) => {
 
-			const far = Math.min( scope.camera.far, scope.maxFar );
-			scope.getExtendedBreaks( breaksVec2 );
+			const far = Math.min( this.camera.far, this.maxFar );
+			this.getExtendedBreaks( breaksVec2 );
 
 			shader.uniforms.CSM_cascades = { value: breaksVec2 };
-			shader.uniforms.cameraNear = { value: scope.camera.near };
+			shader.uniforms.cameraNear = { value: this.camera.near };
 			shader.uniforms.shadowFar = { value: far };
 
 			shaders.set( material, shader );
@@ -279,7 +309,7 @@ class CSM {
 
 	}
 
-	updateUniforms() {
+	private updateUniforms() {
 
 		const far = Math.min( this.camera.far, this.maxFar );
 		const shaders = this.shaders;
@@ -311,7 +341,7 @@ class CSM {
 
 	}
 
-	getExtendedBreaks( target ) {
+	private getExtendedBreaks( target ) {
 
 		while ( target.length < this.breaks.length ) {
 
@@ -332,16 +362,16 @@ class CSM {
 
 	}
 
-	updateFrustums() {
+	public updateFrustums() {
 
-		this.getBreaks();
+		this.updateBreaks();
 		this.initCascades();
 		this.updateShadowBounds();
 		this.updateUniforms();
 
 	}
 
-	remove() {
+	public remove() {
 
 		for ( let i = 0; i < this.lights.length; i ++ ) {
 
@@ -351,7 +381,7 @@ class CSM {
 
 	}
 
-	dispose() {
+	public dispose() {
 
 		const shaders = this.shaders;
 		shaders.forEach( function ( shader, material ) {
@@ -384,8 +414,8 @@ class CSM {
 
 	}
 
-}
+	public static Helper = CSMHelper;
 
-CSM.Helper = CSMHelper;
+}
 
 export default CSM;

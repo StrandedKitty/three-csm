@@ -1,0 +1,54 @@
+import { Vector3, DirectionalLight, Object3D, Material, PerspectiveCamera } from 'three';
+import CSMHelper from './CSMHelper';
+import CSMFrustum from './CSMFrustum';
+interface Params {
+    camera: PerspectiveCamera;
+    parent: Object3D;
+    cascades?: number;
+    maxFar?: number;
+    mode?: 'uniform' | 'logarithmic' | 'practical' | 'custom';
+    shadowMapSize?: number;
+    shadowBias?: number;
+    lightDirection?: Vector3;
+    lightIntensity?: number;
+    lightNear?: number;
+    lightFar?: number;
+    lightMargin?: number;
+    customSplitsCallback?: (cascadeCount: any, nearDistance: any, farDistance: any) => number[];
+}
+declare class CSM {
+    camera: PerspectiveCamera;
+    parent: Object3D;
+    cascades: number;
+    maxFar: number;
+    mode: string;
+    shadowMapSize: number;
+    shadowBias: number;
+    lightDirection: Vector3;
+    lightIntensity: number;
+    lightNear: number;
+    lightFar: number;
+    lightMargin: number;
+    customSplitsCallback: (cascadeCount: any, nearDistance: any, farDistance: any) => number[];
+    fade: boolean;
+    mainFrustum: CSMFrustum;
+    frustums: CSMFrustum[];
+    breaks: number[];
+    lights: DirectionalLight[];
+    private readonly shaders;
+    constructor(data: Params);
+    private createLights;
+    private initCascades;
+    private updateShadowBounds;
+    private updateBreaks;
+    update(): void;
+    private injectInclude;
+    setupMaterial(material: Material): void;
+    private updateUniforms;
+    private getExtendedBreaks;
+    updateFrustums(): void;
+    remove(): void;
+    dispose(): void;
+    static Helper: typeof CSMHelper;
+}
+export default CSM;

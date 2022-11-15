@@ -4,9 +4,10 @@
 	"description": "Cascaded shadow mapping (CSM) implementation for three.js",
 	"main": "build/three-csm.js",
 	"module": "build/three-csm.module.js",
+	"types": "build/three-csm.d.ts",
 	"scripts": {
-		"build": "rollup -c",
-		"dev": "concurrently \"ws\" \"rollup -c -w\"",
+		"build": "rollup -c --bundleConfigAsCjs",
+		"dev": "concurrently \"ws\" \"rollup -c -w --bundleConfigAsCjs\"",
 		"server": "ws"
 	},
 	"repository": {
@@ -22,8 +23,16 @@
 	"author": "vtHawk",
 	"license": "MIT",
 	"devDependencies": {
+		"@rollup/plugin-eslint": "^9.0.1",
+		"@rollup/plugin-typescript": "^9.0.2",
+		"@types/three": "^0.134.0",
+		"@typescript-eslint/eslint-plugin": "^5.43.0",
+		"@typescript-eslint/parser": "^5.43.0",
 		"concurrently": "^4.1.2",
+		"eslint": "^8.27.0",
+		"eslint-config-mdcs": "^5.0.0",
 		"local-web-server": "^3.0.7",
-		"rollup": "^1.23.1"
+		"rollup": "^3.3.0",
+		"typescript": "^4.8.4"
 	}
 }

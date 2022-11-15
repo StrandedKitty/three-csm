@@ -9,18 +9,26 @@ import {
 	PlaneBufferGeometry,
 	MeshBasicMaterial,
 	BufferAttribute,
-	DoubleSide
+	DoubleSide,
+	Color
 } from 'three';
+import CSM from './CSM';
 
 class CSMHelper extends Group {
 
-	constructor( csm ) {
+	private readonly csm: CSM;
+	public displayFrustum = true;
+	public displayPlanes = true;
+	public displayShadowBounds = true;
+	private frustumLines: LineSegments<BufferGeometry, LineBasicMaterial>;
+	private cascadeLines: Box3Helper[] = [];
+	private cascadePlanes: Mesh[] = [];
+	private shadowLines: Group[] = [];
+
+	public constructor( csm: CSM ) {
 
 		super();
 		this.csm = csm;
-		this.displayFrustum = true;
-		this.displayPlanes = true;
-		this.displayShadowBounds = true;
 
 		const indices = new Uint16Array( [ 0, 1, 1, 2, 2, 3, 3, 0, 4, 5, 5, 6, 6, 7, 7, 4, 0, 4, 1, 5, 2, 6, 3, 7 ] );
 		const positions = new Float32Array( 24 );
@@ -31,13 +39,10 @@ class CSMHelper extends Group {
 		this.add( frustumLines );
 
 		this.frustumLines = frustumLines;
-		this.cascadeLines = [];
-		this.cascadePlanes = [];
-		this.shadowLines = [];
 
 	}
 
-	updateVisibility() {
+	public updateVisibility() {
 
 		const displayFrustum = this.displayFrustum;
 		const displayPlanes = this.displayPlanes;
@@ -63,7 +68,7 @@ class CSMHelper extends Group {
 
 	}
 
-	update() {
+	public update() {
 
 		const csm = this.csm;
 		const camera = csm.camera;
@@ -83,7 +88,7 @@ class CSMHelper extends Group {
 		this.scale.copy( camera.scale );
 		this.updateMatrixWorld( true );
 
-		while( cascadeLines.length > cascades ) {
+		while ( cascadeLines.length > cascades ) {
 
 			this.remove( cascadeLines.pop() );
 			this.remove( cascadePlanes.pop() );
@@ -91,13 +96,13 @@ class CSMHelper extends Group {
 
 		}
 
-		while( cascadeLines.length < cascades ) {
+		while ( cascadeLines.length < cascades ) {
 
-			const cascadeLine = new Box3Helper( new Box3(), 0xffffff );
+			const cascadeLine = new Box3Helper( new Box3(), new Color( 0xffffff ) );
 			const planeMat = new MeshBasicMaterial( { transparent: true, opacity: 0.1, depthWrite: false, side: DoubleSide } );
 			const cascadePlane = new Mesh( new PlaneBufferGeometry(), planeMat );
 			const shadowLineGroup = new Group();
-			const shadowLine = new Box3Helper( new Box3(), 0xffff00 );
+			const shadowLine = new Box3Helper( new Box3(), new Color( 0xffff00 ) );
 			shadowLineGroup.add( shadowLine );
 
 			this.add( cascadeLine );
@@ -120,7 +125,7 @@ class CSMHelper extends Group {
 			const cascadeLine = cascadeLines[ i ];
 			const cascadePlane = cascadePlanes[ i ];
 			const shadowLineGroup = shadowLines[ i ];
-			const shadowLine = shadowLineGroup.children[ 0 ];
+			const shadowLine = shadowLineGroup.children[ 0 ] as Box3Helper;
 
 			cascadeLine.box.min.copy( farVerts[ 2 ] );
 			cascadeLine.box.max.copy( farVerts[ 0 ] );
@@ -160,4 +165,4 @@ class CSMHelper extends Group {
 
 }
 
-export { CSMHelper };
+export default CSMHelper;

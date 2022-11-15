@@ -1,0 +1,15 @@
+{
+	"compilerOptions": {
+		"module": "esnext",
+		"moduleResolution": "node",
+		"target": "es6",
+		"sourceMap": false,
+		"outDir": "build",
+		"declaration": true,
+		"declarationDir": ".",
+		"rootDir": "src/"
+	},
+	"exclude": [
+		"node_modules"
+	]
+}

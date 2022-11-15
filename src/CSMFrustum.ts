@@ -2,26 +2,34 @@ import { Vector3, Matrix4 } from 'three';
 
 const inverseProjectionMatrix = new Matrix4();
 
+interface Params {
+	projectionMatrix?: Matrix4;
+	maxFar?: number;
+}
+
+interface FrustumVertices {
+	far: Vector3[];
+	near: Vector3[]
+}
+
 export default class CSMFrustum {
 
-	constructor( data ) {
+	public vertices: FrustumVertices = {
+		near: [
+			new Vector3(),
+			new Vector3(),
+			new Vector3(),
+			new Vector3()
+		],
+		far: [
+			new Vector3(),
+			new Vector3(),
+			new Vector3(),
+			new Vector3()
+		]
+	};
 
-		data = data || {};
-
-		this.vertices = {
-			near: [
-				new Vector3(),
-				new Vector3(),
-				new Vector3(),
-				new Vector3()
-			],
-			far: [
-				new Vector3(),
-				new Vector3(),
-				new Vector3(),
-				new Vector3()
-			]
-		};
+	public constructor( data: Params = {} ) {
 
 		if ( data.projectionMatrix !== undefined ) {
 
@@ -31,13 +39,11 @@ export default class CSMFrustum {
 
 	}
 
-	setFromProjectionMatrix( projectionMatrix, maxFar ) {
+	public setFromProjectionMatrix( projectionMatrix: Matrix4, maxFar: number ): FrustumVertices {
 
 		const isOrthographic = projectionMatrix.elements[ 2 * 4 + 3 ] === 0;
 
-
-		inverseProjectionMatrix.copy(projectionMatrix).invert();
-
+		inverseProjectionMatrix.copy( projectionMatrix ).invert();
 
 		// 3 --- 0  vertices.near/far order
 		// |     |
@@ -79,13 +85,14 @@ export default class CSMFrustum {
 
 	}
 
-	split( breaks, target ) {
+	public split( breaks: number[], target: CSMFrustum[] ) {
 
 		while ( breaks.length > target.length ) {
 
 			target.push( new CSMFrustum() );
 
 		}
+
 		target.length = breaks.length;
 
 		for ( let i = 0; i < breaks.length; i ++ ) {
@@ -132,17 +139,17 @@ export default class CSMFrustum {
 
 	}
 
-	toSpace( cameraMatrix, target ) {
+	public toSpace( cameraMatrix: Matrix4, target: CSMFrustum ) {
 
-		for ( var i = 0; i < 4; i ++ ) {
+		for ( let i = 0; i < 4; i ++ ) {
 
 			target.vertices.near[ i ]
-			.copy( this.vertices.near[ i ] )
-			.applyMatrix4( cameraMatrix );
+				.copy( this.vertices.near[ i ] )
+				.applyMatrix4( cameraMatrix );
 
 			target.vertices.far[ i ]
-			.copy( this.vertices.far[ i ] )
-			.applyMatrix4( cameraMatrix );
+				.copy( this.vertices.far[ i ] )
+				.applyMatrix4( cameraMatrix );
 
 		}
 
