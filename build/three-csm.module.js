@@ -915,10 +915,12 @@ class CSM {
 
 		}
 
+		this.remove();
+
 	}
 
 }
 
 CSM.Helper = CSMHelper;
 
-export default CSM;
+export { CSM as default };

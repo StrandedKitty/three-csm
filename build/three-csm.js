@@ -1,8 +1,8 @@
 (function (global, factory) {
 	typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('three')) :
 	typeof define === 'function' && define.amd ? define(['three'], factory) :
-	(global = global || self, (global.THREE = global.THREE || {}, global.THREE.CSM = factory(global.THREE)));
-}(this, function (three) { 'use strict';
+	(global = typeof globalThis !== 'undefined' ? globalThis : global || self, (global.THREE = global.THREE || {}, global.THREE.CSM = factory(global.THREE)));
+})(this, (function (three) { 'use strict';
 
 	const inverseProjectionMatrix = new three.Matrix4();
 
@@ -918,6 +918,8 @@ uniform float shadowFar;
 				this.lights[ i ].dispose();
 
 			}
+
+			this.remove();
 
 		}
 
