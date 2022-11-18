@@ -76,7 +76,7 @@ interface Params {
 	lightNear?: number;
 	lightFar?: number;
 	lightMargin?: number;
-	customSplitsCallback?: ( cascadeCount, nearDistance, farDistance ) => number[];
+	customSplitsCallback?: ( cascadeCount: number, nearDistance: number, farDistance: number ) => number[];
 }
 
 class CSM {
@@ -93,7 +93,7 @@ class CSM {
 	public lightNear: number;
 	public lightFar: number;
 	public lightMargin: number;
-	public customSplitsCallback: ( cascadeCount, nearDistance, farDistance ) => number[];
+	public customSplitsCallback: ( cascadeCount: number, nearDistance: number, farDistance: number ) => number[];
 	public fade = false;
 	public mainFrustum: CSMFrustum = new CSMFrustum();
 	public frustums: CSMFrustum[] = [];
