@@ -9,7 +9,8 @@ import {
 	Object3D,
 	Material,
 	Shader,
-	Camera
+	PerspectiveCamera,
+	OrthographicCamera
 } from 'three';
 import CSMShader from './CSMShader';
 import CSMHelper from './CSMHelper';
@@ -63,8 +64,10 @@ const _bbox = new Box3();
 const _uniformArray = [];
 const _logArray = [];
 
+export type CustomSplitsCallbackType = ( cascadeCount: number, nearDistance: number, farDistance: number ) => number[];
+
 export interface CSMParams {
-	camera: Camera;
+	camera: PerspectiveCamera | OrthographicCamera;
 	parent: Object3D;
 	cascades?: number;
 	maxFar?: number;
@@ -76,12 +79,12 @@ export interface CSMParams {
 	lightNear?: number;
 	lightFar?: number;
 	lightMargin?: number;
-	customSplitsCallback?: ( cascadeCount: number, nearDistance: number, farDistance: number ) => number[];
+	customSplitsCallback?: CustomSplitsCallbackType;
 }
 
 class CSM {
 
-	public camera: Camera;
+	public camera: PerspectiveCamera | OrthographicCamera;
 	public parent: Object3D;
 	public cascades: number;
 	public maxFar: number;
@@ -93,7 +96,7 @@ class CSM {
 	public lightNear: number;
 	public lightFar: number;
 	public lightMargin: number;
-	public customSplitsCallback: ( cascadeCount: number, nearDistance: number, farDistance: number ) => number[];
+	public customSplitsCallback: CustomSplitsCallbackType;
 	public fade = false;
 	public mainFrustum: CSMFrustum = new CSMFrustum();
 	public frustums: CSMFrustum[] = [];
