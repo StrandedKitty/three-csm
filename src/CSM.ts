@@ -9,7 +9,7 @@ import {
 	Object3D,
 	Material,
 	Shader,
-	PerspectiveCamera
+	Camera
 } from 'three';
 import CSMShader from './CSMShader';
 import CSMHelper from './CSMHelper';
@@ -64,7 +64,7 @@ const _uniformArray = [];
 const _logArray = [];
 
 interface Params {
-	camera: PerspectiveCamera;
+	camera: Camera;
 	parent: Object3D;
 	cascades?: number;
 	maxFar?: number;
@@ -81,7 +81,7 @@ interface Params {
 
 class CSM {
 
-	public camera: PerspectiveCamera;
+	public camera: Camera;
 	public parent: Object3D;
 	public cascades: number;
 	public maxFar: number;
