@@ -63,7 +63,7 @@ const _bbox = new Box3();
 const _uniformArray = [];
 const _logArray = [];
 
-interface Params {
+export interface CSMParams {
 	camera: Camera;
 	parent: Object3D;
 	cascades?: number;
@@ -101,7 +101,7 @@ class CSM {
 	public lights: DirectionalLight[] = [];
 	private readonly shaders: Map<Material, Shader> = new Map();
 
-	public constructor( data: Params ) {
+	public constructor( data: CSMParams ) {
 
 		this.camera = data.camera;
 		this.parent = data.parent;
