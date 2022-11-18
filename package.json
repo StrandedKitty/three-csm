@@ -4,7 +4,7 @@
 	"description": "Cascaded shadow mapping (CSM) implementation for three.js",
 	"main": "build/three-csm.js",
 	"module": "build/three-csm.module.js",
-	"types": "build/three-csm.d.ts",
+	"types": "build/CSM.d.ts",
 	"scripts": {
 		"build": "rollup -c --bundleConfigAsCjs",
 		"dev": "concurrently \"ws\" \"rollup -c -w --bundleConfigAsCjs\"",
