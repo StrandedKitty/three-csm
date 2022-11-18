@@ -9,7 +9,8 @@ import {
 	Object3D,
 	Material,
 	Shader,
-	PerspectiveCamera
+	PerspectiveCamera,
+	OrthographicCamera
 } from 'three';
 import CSMShader from './CSMShader';
 import CSMHelper from './CSMHelper';
@@ -63,8 +64,10 @@ const _bbox = new Box3();
 const _uniformArray = [];
 const _logArray = [];
 
-interface Params {
-	camera: PerspectiveCamera;
+export type CustomSplitsCallbackType = ( cascadeCount: number, nearDistance: number, farDistance: number ) => number[];
+
+export interface CSMParams {
+	camera: PerspectiveCamera | OrthographicCamera;
 	parent: Object3D;
 	cascades?: number;
 	maxFar?: number;
@@ -76,12 +79,12 @@ interface Params {
 	lightNear?: number;
 	lightFar?: number;
 	lightMargin?: number;
-	customSplitsCallback?: ( cascadeCount, nearDistance, farDistance ) => number[];
+	customSplitsCallback?: CustomSplitsCallbackType;
 }
 
 class CSM {
 
-	public camera: PerspectiveCamera;
+	public camera: PerspectiveCamera | OrthographicCamera;
 	public parent: Object3D;
 	public cascades: number;
 	public maxFar: number;
@@ -93,7 +96,7 @@ class CSM {
 	public lightNear: number;
 	public lightFar: number;
 	public lightMargin: number;
-	public customSplitsCallback: ( cascadeCount, nearDistance, farDistance ) => number[];
+	public customSplitsCallback: CustomSplitsCallbackType;
 	public fade = false;
 	public mainFrustum: CSMFrustum = new CSMFrustum();
 	public frustums: CSMFrustum[] = [];
@@ -101,7 +104,7 @@ class CSM {
 	public lights: DirectionalLight[] = [];
 	private readonly shaders: Map<Material, Shader> = new Map();
 
-	public constructor( data: Params ) {
+	public constructor( data: CSMParams ) {
 
 		this.camera = data.camera;
 		this.parent = data.parent;

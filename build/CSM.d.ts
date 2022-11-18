@@ -1,8 +1,9 @@
-import { Vector3, DirectionalLight, Object3D, Material, PerspectiveCamera } from 'three';
+import { Vector3, DirectionalLight, Object3D, Material, PerspectiveCamera, OrthographicCamera } from 'three';
 import CSMHelper from './CSMHelper';
 import CSMFrustum from './CSMFrustum';
-interface Params {
-    camera: PerspectiveCamera;
+export declare type CustomSplitsCallbackType = (cascadeCount: number, nearDistance: number, farDistance: number) => number[];
+export interface CSMParams {
+    camera: PerspectiveCamera | OrthographicCamera;
     parent: Object3D;
     cascades?: number;
     maxFar?: number;
@@ -14,10 +15,10 @@ interface Params {
     lightNear?: number;
     lightFar?: number;
     lightMargin?: number;
-    customSplitsCallback?: (cascadeCount: any, nearDistance: any, farDistance: any) => number[];
+    customSplitsCallback?: CustomSplitsCallbackType;
 }
 declare class CSM {
-    camera: PerspectiveCamera;
+    camera: PerspectiveCamera | OrthographicCamera;
     parent: Object3D;
     cascades: number;
     maxFar: number;
@@ -29,14 +30,14 @@ declare class CSM {
     lightNear: number;
     lightFar: number;
     lightMargin: number;
-    customSplitsCallback: (cascadeCount: any, nearDistance: any, farDistance: any) => number[];
+    customSplitsCallback: CustomSplitsCallbackType;
     fade: boolean;
     mainFrustum: CSMFrustum;
     frustums: CSMFrustum[];
     breaks: number[];
     lights: DirectionalLight[];
     private readonly shaders;
-    constructor(data: Params);
+    constructor(data: CSMParams);
     private createLights;
     private initCascades;
     private updateShadowBounds;
