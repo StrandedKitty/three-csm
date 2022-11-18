@@ -1,6 +1,6 @@
 {
 	"name": "three-csm",
-	"version": "3.0.1",
+	"version": "3.1.0",
 	"description": "Cascaded shadow mapping (CSM) implementation for three.js",
 	"main": "build/three-csm.js",
 	"module": "build/three-csm.module.js",
