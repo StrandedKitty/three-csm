@@ -627,7 +627,8 @@ uniform float shadowFar;
 	        }
 	        const breaksVec2 = [];
 	        const shaders = this.shaders;
-	        material.onBeforeCompile = (shader) => {
+	        shaders.set(material, null);
+	        const fn = (shader) => {
 	            const far = Math.min(this.camera.far, this.maxFar);
 	            this.getExtendedBreaks(breaksVec2);
 	            shader.uniforms.CSM_cascades = { value: breaksVec2 };
@@ -635,7 +636,16 @@ uniform float shadowFar;
 	            shader.uniforms.shadowFar = { value: far };
 	            shaders.set(material, shader);
 	        };
-	        shaders.set(material, null);
+	        if (!material.onBeforeCompile) {
+	            material.onBeforeCompile = fn;
+	        }
+	        else {
+	            const previousFn = material.onBeforeCompile;
+	            material.onBeforeCompile = (...args) => {
+	                previousFn(...args);
+	                fn(args[0]);
+	            };
+	        }
 	    }
 	    updateUniforms() {
 	        const far = Math.min(this.camera.far, this.maxFar);
