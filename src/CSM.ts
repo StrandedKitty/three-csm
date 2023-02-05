@@ -118,7 +118,7 @@ class CSM {
 		this.shadowBias = data.shadowBias || 0;
 		this.lightDirection = data.lightDirection || new Vector3( 1, - 1, 1 ).normalize();
 		this.lightIntensity = data.lightIntensity || 1;
-		this.lightColor =  data.lightColor || 0xffffff;
+		this.lightColor = data.lightColor || new Color( 0xffffff );
 		this.lightNear = data.lightNear || 1;
 		this.lightFar = data.lightFar || 2000;
 		this.lightMargin = data.lightMargin || 200;
@@ -149,12 +149,12 @@ class CSM {
 
 		// NOTE: Prepend lights to the parent as we assume CSM shadows come from first light sources in the world
 
-		for ( let i = this.lights.length - 1; i >= 0; i-- ) {
+		for ( let i = this.lights.length - 1; i >= 0; i -- ) {
 
-			const light = this.lights[i];
+			const light = this.lights[ i ];
 
 			light.parent = this.parent;
-			this.parent.children.unshift(light);
+			this.parent.children.unshift( light );
 
 		}
 
@@ -289,8 +289,8 @@ class CSM {
 
 	private injectInclude() {
 
-		ShaderChunk.lights_fragment_begin = CSMShader.lights_fragment_begin(this);
-		ShaderChunk.lights_pars_begin = CSMShader.lights_pars_begin(this);
+		ShaderChunk.lights_fragment_begin = CSMShader.lights_fragment_begin( this );
+		ShaderChunk.lights_pars_begin = CSMShader.lights_pars_begin();
 
 	}
 
