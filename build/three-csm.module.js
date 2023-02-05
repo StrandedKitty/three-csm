@@ -1,7 +1,7 @@
 import { ShaderChunk, Group, BufferGeometry, BufferAttribute, LineSegments, LineBasicMaterial, Box3Helper, Box3, Color, MeshBasicMaterial, DoubleSide, Mesh, PlaneBufferGeometry, Matrix4, Vector3, DirectionalLight, Vector2, MathUtils } from 'three';
 
 const CSMShader = {
-    lights_fragment_begin: /* glsl */ `
+    lights_fragment_begin: (csm) => /* glsl */ `
 GeometricContext geometry;
 
 geometry.position = - vViewPosition;
@@ -93,36 +93,53 @@ IncidentLight directLight;
 	  	#if defined( USE_SHADOWMAP ) && ( UNROLLED_LOOP_INDEX < NUM_DIR_LIGHT_SHADOWS )
 			// NOTE: Depth gets larger away from the camera.
 			// cascade.x is closer, cascade.y is further
-			cascade = CSM_cascades[ i ];
-			cascadeCenter = ( cascade.x + cascade.y ) / 2.0;
-			closestEdge = linearDepth < cascadeCenter ? cascade.x : cascade.y;
-			margin = 0.25 * pow( closestEdge, 2.0 );
-			csmx = cascade.x - margin / 2.0;
-			csmy = cascade.y + margin / 2.0;
-			if( linearDepth >= csmx && ( linearDepth < csmy || UNROLLED_LOOP_INDEX == CSM_CASCADES - 1 ) ) {
 
-				float dist = min( linearDepth - csmx, csmy - linearDepth );
-				float ratio = clamp( dist / margin, 0.0, 1.0 );
+				#if ( UNROLLED_LOOP_INDEX < ${csm.cascades} )
 
-				vec3 prevColor = directLight.color;
-				directionalLightShadow = directionalLightShadows[ i ];
-				directLight.color *= all( bvec2( directLight.visible, receiveShadow ) ) ? getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;
+					// NOTE: Apply CSM shadows
 
-				bool shouldFadeLastCascade = UNROLLED_LOOP_INDEX == CSM_CASCADES - 1 && linearDepth > cascadeCenter;
-				directLight.color = mix( prevColor, directLight.color, shouldFadeLastCascade ? ratio : 1.0 );
+					cascade = CSM_cascades[ i ];
+					cascadeCenter = ( cascade.x + cascade.y ) / 2.0;
+					closestEdge = linearDepth < cascadeCenter ? cascade.x : cascade.y;
+					margin = 0.25 * pow( closestEdge, 2.0 );
+					csmx = cascade.x - margin / 2.0;
+					csmy = cascade.y + margin / 2.0;
+					if( linearDepth >= csmx && ( linearDepth < csmy || UNROLLED_LOOP_INDEX == CSM_CASCADES - 1 ) ) {
 
-				ReflectedLight prevLight = reflectedLight;
-				RE_Direct( directLight, geometry, material, reflectedLight );
+						float dist = min( linearDepth - csmx, csmy - linearDepth );
+						float ratio = clamp( dist / margin, 0.0, 1.0 );
 
-				bool shouldBlend = UNROLLED_LOOP_INDEX != CSM_CASCADES - 1 || UNROLLED_LOOP_INDEX == CSM_CASCADES - 1 && linearDepth < cascadeCenter;
-				float blendRatio = shouldBlend ? ratio : 1.0;
+						vec3 prevColor = directLight.color;
+						directionalLightShadow = directionalLightShadows[ i ];
+						directLight.color *= all( bvec2( directLight.visible, receiveShadow ) ) ? getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;
 
-				reflectedLight.directDiffuse = mix( prevLight.directDiffuse, reflectedLight.directDiffuse, blendRatio );
-				reflectedLight.directSpecular = mix( prevLight.directSpecular, reflectedLight.directSpecular, blendRatio );
-				reflectedLight.indirectDiffuse = mix( prevLight.indirectDiffuse, reflectedLight.indirectDiffuse, blendRatio );
-				reflectedLight.indirectSpecular = mix( prevLight.indirectSpecular, reflectedLight.indirectSpecular, blendRatio );
+						bool shouldFadeLastCascade = UNROLLED_LOOP_INDEX == CSM_CASCADES - 1 && linearDepth > cascadeCenter;
+						directLight.color = mix( prevColor, directLight.color, shouldFadeLastCascade ? ratio : 1.0 );
 
-			}
+						ReflectedLight prevLight = reflectedLight;
+						RE_Direct( directLight, geometry, material, reflectedLight );
+
+						bool shouldBlend = UNROLLED_LOOP_INDEX != CSM_CASCADES - 1 || UNROLLED_LOOP_INDEX == CSM_CASCADES - 1 && linearDepth < cascadeCenter;
+						float blendRatio = shouldBlend ? ratio : 1.0;
+
+						reflectedLight.directDiffuse = mix( prevLight.directDiffuse, reflectedLight.directDiffuse, blendRatio );
+						reflectedLight.directSpecular = mix( prevLight.directSpecular, reflectedLight.directSpecular, blendRatio );
+						reflectedLight.indirectDiffuse = mix( prevLight.indirectDiffuse, reflectedLight.indirectDiffuse, blendRatio );
+						reflectedLight.indirectSpecular = mix( prevLight.indirectSpecular, reflectedLight.indirectSpecular, blendRatio );
+
+					}
+
+				#else
+
+					// NOTE: Apply the reminder of directional lights
+
+					directionalLightShadow = directionalLightShadows[ i ];
+					directLight.color *= ( directLight.visible && receiveShadow ) ? getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;
+
+					RE_Direct( directLight, geometry, material, reflectedLight );
+
+				#endif
+
 	  	#endif
 
 	}
@@ -135,12 +152,27 @@ IncidentLight directLight;
 			directionalLight = directionalLights[ i ];
 			getDirectionalLightInfo( directionalLight, geometry, directLight );
 
-			#if defined( USE_SHADOWMAP ) && ( UNROLLED_LOOP_INDEX < NUM_DIR_LIGHT_SHADOWS )
+			#if defined( USE_SHADOWMAP ) && ( UNROLLED_LOOP_INDEX < NUM_DIR_LIGHT_SHADOWS ) 
 
-			directionalLightShadow = directionalLightShadows[ i ];
-			if(linearDepth >= CSM_cascades[UNROLLED_LOOP_INDEX].x && linearDepth < CSM_cascades[UNROLLED_LOOP_INDEX].y) directLight.color *= all( bvec2( directLight.visible, receiveShadow ) ) ? getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;
+				#if ( UNROLLED_LOOP_INDEX < ${csm.cascades} )
 
-			if(linearDepth >= CSM_cascades[UNROLLED_LOOP_INDEX].x && (linearDepth < CSM_cascades[UNROLLED_LOOP_INDEX].y || UNROLLED_LOOP_INDEX == CSM_CASCADES - 1)) RE_Direct( directLight, geometry, material, reflectedLight );
+					// NOTE: Apply CSM shadows
+
+					directionalLightShadow = directionalLightShadows[ i ];
+					if(linearDepth >= CSM_cascades[UNROLLED_LOOP_INDEX].x && linearDepth < CSM_cascades[UNROLLED_LOOP_INDEX].y) directLight.color *= all( bvec2( directLight.visible, receiveShadow ) ) ? getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;
+
+					if(linearDepth >= CSM_cascades[UNROLLED_LOOP_INDEX].x && (linearDepth < CSM_cascades[UNROLLED_LOOP_INDEX].y || UNROLLED_LOOP_INDEX == CSM_CASCADES - 1)) RE_Direct( directLight, geometry, material, reflectedLight );
+
+				#else
+
+					// NOTE: Apply the reminder of directional lights
+
+					directionalLightShadow = directionalLightShadows[ i ];
+					directLight.color *= ( directLight.visible && receiveShadow ) ? getShadow( directionalShadowMap[ i ], directionalLightShadow.shadowMapSize, directionalLightShadow.shadowBias, directionalLightShadow.shadowRadius, vDirectionalShadowCoord[ i ] ) : 1.0;
+	
+					RE_Direct( directLight, geometry, material, reflectedLight );
+
+				#endif
 
 			#endif
 
@@ -239,7 +271,7 @@ IncidentLight directLight;
 
 #endif
 `,
-    lights_pars_begin: /* glsl */ `
+    lights_pars_begin: () => /* glsl */ `
 #if defined( USE_CSM ) && defined( CSM_CASCADES )
 uniform vec2 CSM_cascades[CSM_CASCADES];
 uniform float cameraNear;
@@ -496,6 +528,7 @@ class CSM {
         this.shadowBias = data.shadowBias || 0;
         this.lightDirection = data.lightDirection || new Vector3(1, -1, 1).normalize();
         this.lightIntensity = data.lightIntensity || 1;
+        this.lightColor = data.lightColor || new Color(0xffffff);
         this.lightNear = data.lightNear || 1;
         this.lightFar = data.lightFar || 2000;
         this.lightMargin = data.lightMargin || 200;
@@ -506,15 +539,20 @@ class CSM {
     }
     createLights() {
         for (let i = 0; i < this.cascades; i++) {
-            const light = new DirectionalLight(0xffffff, this.lightIntensity);
+            const light = new DirectionalLight(this.lightColor, this.lightIntensity);
             light.castShadow = true;
             light.shadow.mapSize.width = this.shadowMapSize;
             light.shadow.mapSize.height = this.shadowMapSize;
             light.shadow.camera.near = this.lightNear;
             light.shadow.camera.far = this.lightFar;
-            this.parent.add(light);
             this.parent.add(light.target);
             this.lights.push(light);
+        }
+        // NOTE: Prepend lights to the parent as we assume CSM shadows come from first light sources in the world
+        for (let i = this.lights.length - 1; i >= 0; i--) {
+            const light = this.lights[i];
+            light.parent = this.parent;
+            this.parent.children.unshift(light);
         }
     }
     initCascades() {
@@ -611,8 +649,8 @@ class CSM {
         }
     }
     injectInclude() {
-        ShaderChunk.lights_fragment_begin = CSMShader.lights_fragment_begin;
-        ShaderChunk.lights_pars_begin = CSMShader.lights_pars_begin;
+        ShaderChunk.lights_fragment_begin = CSMShader.lights_fragment_begin(this);
+        ShaderChunk.lights_pars_begin = CSMShader.lights_pars_begin();
     }
     setupMaterial(material) {
         material.defines = material.defines || {};
