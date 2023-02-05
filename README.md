@@ -96,6 +96,8 @@ csm.update(camera.matrix);
 	- `settings.shadowBias` — Serves the same purpose as [THREE.LightShadow.bias](https://threejs.org/docs/#api/en/lights/shadows/LightShadow.bias), but most likely you will need to use much smaller values. Optional.
 	
 	- `settings.lightIntensity` — Same as [THREE.DirectionalLight.intensity](https://threejs.org/docs/#api/en/lights/DirectionalLight). Optional.
+
+	- `settings.lightColor` — Same as [THREE.DirectionalLight.color](https://threejs.org/docs/#api/en/lights/DirectionalLight). Optional.
 	
 	- `settings.lightDirection` — Normalized `THREE.Vector3()`. Optional.
 	
