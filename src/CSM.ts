@@ -10,7 +10,8 @@ import {
 	Material,
 	Shader,
 	PerspectiveCamera,
-	OrthographicCamera
+	OrthographicCamera,
+	Color
 } from 'three';
 import CSMShader from './CSMShader';
 import CSMHelper from './CSMHelper';
@@ -76,6 +77,7 @@ export interface CSMParams {
 	shadowBias?: number;
 	lightDirection?: Vector3;
 	lightIntensity?: number;
+	lightColor?: Color;
 	lightNear?: number;
 	lightFar?: number;
 	lightMargin?: number;
@@ -93,6 +95,7 @@ class CSM {
 	public shadowBias: number;
 	public lightDirection: Vector3;
 	public lightIntensity: number;
+	public lightColor: Color;
 	public lightNear: number;
 	public lightFar: number;
 	public lightMargin: number;
@@ -115,6 +118,7 @@ class CSM {
 		this.shadowBias = data.shadowBias || 0;
 		this.lightDirection = data.lightDirection || new Vector3( 1, - 1, 1 ).normalize();
 		this.lightIntensity = data.lightIntensity || 1;
+		this.lightColor = data.lightColor || new Color( 0xffffff );
 		this.lightNear = data.lightNear || 1;
 		this.lightFar = data.lightFar || 2000;
 		this.lightMargin = data.lightMargin || 200;
@@ -130,7 +134,7 @@ class CSM {
 
 		for ( let i = 0; i < this.cascades; i ++ ) {
 
-			const light = new DirectionalLight( 0xffffff, this.lightIntensity );
+			const light = new DirectionalLight( this.lightColor, this.lightIntensity );
 			light.castShadow = true;
 			light.shadow.mapSize.width = this.shadowMapSize;
 			light.shadow.mapSize.height = this.shadowMapSize;
@@ -138,9 +142,19 @@ class CSM {
 			light.shadow.camera.near = this.lightNear;
 			light.shadow.camera.far = this.lightFar;
 
-			this.parent.add( light );
 			this.parent.add( light.target );
 			this.lights.push( light );
+
+		}
+
+		// NOTE: Prepend lights to the parent as we assume CSM shadows come from first light sources in the world
+
+		for ( let i = this.lights.length - 1; i >= 0; i -- ) {
+
+			const light = this.lights[ i ];
+
+			light.parent = this.parent;
+			this.parent.children.unshift( light );
 
 		}
 
@@ -275,8 +289,8 @@ class CSM {
 
 	private injectInclude() {
 
-		ShaderChunk.lights_fragment_begin = CSMShader.lights_fragment_begin;
-		ShaderChunk.lights_pars_begin = CSMShader.lights_pars_begin;
+		ShaderChunk.lights_fragment_begin = CSMShader.lights_fragment_begin( this );
+		ShaderChunk.lights_pars_begin = CSMShader.lights_pars_begin();
 
 	}
 
