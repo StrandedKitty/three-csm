@@ -515,6 +515,7 @@ uniform float shadowFar;
 	const _bbox = new three.Box3();
 	const _uniformArray = [];
 	const _logArray = [];
+	let _shaderCodeInjected = false;
 	class CSM {
 	    constructor(data) {
 	        this.fade = false;
@@ -653,8 +654,11 @@ uniform float shadowFar;
 	        }
 	    }
 	    injectInclude() {
-	        three.ShaderChunk.lights_fragment_begin = CSMShader.lights_fragment_begin(this);
-	        three.ShaderChunk.lights_pars_begin = CSMShader.lights_pars_begin();
+	        if (!_shaderCodeInjected) {
+	            three.ShaderChunk.lights_fragment_begin = CSMShader.lights_fragment_begin(this);
+	            three.ShaderChunk.lights_pars_begin = CSMShader.lights_pars_begin();
+	            _shaderCodeInjected = true;
+	        }
 	    }
 	    setupMaterial(material) {
 	        material.defines = material.defines || {};

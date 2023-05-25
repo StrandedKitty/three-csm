@@ -64,6 +64,7 @@ const _center = new Vector3();
 const _bbox = new Box3();
 const _uniformArray = [];
 const _logArray = [];
+let _shaderCodeInjected = false;
 
 export type CustomSplitsCallbackType = ( cascadeCount: number, nearDistance: number, farDistance: number ) => number[];
 
@@ -289,8 +290,13 @@ class CSM {
 
 	private injectInclude() {
 
-		ShaderChunk.lights_fragment_begin = CSMShader.lights_fragment_begin( this );
-		ShaderChunk.lights_pars_begin = CSMShader.lights_pars_begin();
+		if ( ! _shaderCodeInjected ) {
+
+			ShaderChunk.lights_fragment_begin = CSMShader.lights_fragment_begin( this );
+			ShaderChunk.lights_pars_begin = CSMShader.lights_pars_begin();
+			_shaderCodeInjected = true;
+
+		}
 
 	}
 
