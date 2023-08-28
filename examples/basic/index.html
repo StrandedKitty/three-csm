@@ -18,7 +18,7 @@
 	</head>
 
 	<body>
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.js"></script>
+		<script src="https://unpkg.com/three@0.155.0/build/three.js"></script>
 		<script src="OrbitControls.js"></script>
 		<script src="dat.gui.min.js"></script>
 		<script src="../../build/three-csm.js"></script>
@@ -72,6 +72,7 @@
 				orthoCamera = new THREE.OrthographicCamera();
 
 				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.useLegacyLights = true;
 				renderer.setSize( window.innerWidth, window.innerHeight );
 				document.body.appendChild( renderer.domElement );
 				renderer.shadowMap.enabled = true;
@@ -106,7 +107,7 @@
 				var floorMaterial = new THREE.MeshPhongMaterial( { color: '#252a34' } );
 				csm.setupMaterial( floorMaterial );
 
-				var floor = new THREE.Mesh( new THREE.PlaneBufferGeometry( 10000, 10000, 8, 8 ), floorMaterial );
+				var floor = new THREE.Mesh( new THREE.PlaneGeometry( 10000, 10000, 8, 8 ), floorMaterial );
 				floor.rotation.x = - Math.PI / 2;
 				floor.castShadow = true;
 				floor.receiveShadow = true;
@@ -118,7 +119,7 @@
 				var material2 = new THREE.MeshPhongMaterial( { color: '#ff2e63' } );
 				csm.setupMaterial( material2 );
 
-				var geometry = new THREE.BoxBufferGeometry( 10, 10, 10 );
+				var geometry = new THREE.BoxGeometry( 10, 10, 10 );
 
 				for ( var i = 0; i < 40; i ++ ) {
 

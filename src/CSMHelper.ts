@@ -6,7 +6,7 @@ import {
 	LineBasicMaterial,
 	Box3Helper,
 	Box3,
-	PlaneBufferGeometry,
+	PlaneGeometry,
 	MeshBasicMaterial,
 	BufferAttribute,
 	DoubleSide,
@@ -100,7 +100,7 @@ class CSMHelper extends Group {
 
 			const cascadeLine = new Box3Helper( new Box3(), new Color( 0xffffff ) );
 			const planeMat = new MeshBasicMaterial( { transparent: true, opacity: 0.1, depthWrite: false, side: DoubleSide } );
-			const cascadePlane = new Mesh( new PlaneBufferGeometry(), planeMat );
+			const cascadePlane = new Mesh( new PlaneGeometry(), planeMat );
 			const shadowLineGroup = new Group();
 			const shadowLine = new Box3Helper( new Box3(), new Color( 0xffff00 ) );
 			shadowLineGroup.add( shadowLine );

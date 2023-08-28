@@ -1,4 +1,4 @@
-import { ShaderChunk, Group, BufferGeometry, BufferAttribute, LineSegments, LineBasicMaterial, Box3Helper, Box3, Color, MeshBasicMaterial, DoubleSide, Mesh, PlaneBufferGeometry, Matrix4, Vector3, DirectionalLight, Vector2, MathUtils } from 'three';
+import { ShaderChunk, Group, BufferGeometry, BufferAttribute, LineSegments, LineBasicMaterial, Box3Helper, Box3, Color, MeshBasicMaterial, DoubleSide, Mesh, PlaneGeometry, Matrix4, Vector3, DirectionalLight, Vector2, MathUtils } from 'three';
 
 const CSMShader = {
     lights_fragment_begin: (csm) => /* glsl */ `
@@ -341,7 +341,7 @@ class CSMHelper extends Group {
         while (cascadeLines.length < cascades) {
             const cascadeLine = new Box3Helper(new Box3(), new Color(0xffffff));
             const planeMat = new MeshBasicMaterial({ transparent: true, opacity: 0.1, depthWrite: false, side: DoubleSide });
-            const cascadePlane = new Mesh(new PlaneBufferGeometry(), planeMat);
+            const cascadePlane = new Mesh(new PlaneGeometry(), planeMat);
             const shadowLineGroup = new Group();
             const shadowLine = new Box3Helper(new Box3(), new Color(0xffff00));
             shadowLineGroup.add(shadowLine);
