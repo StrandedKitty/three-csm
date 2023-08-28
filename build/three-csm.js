@@ -345,7 +345,7 @@ uniform float shadowFar;
 	        while (cascadeLines.length < cascades) {
 	            const cascadeLine = new three.Box3Helper(new three.Box3(), new three.Color(0xffffff));
 	            const planeMat = new three.MeshBasicMaterial({ transparent: true, opacity: 0.1, depthWrite: false, side: three.DoubleSide });
-	            const cascadePlane = new three.Mesh(new three.PlaneBufferGeometry(), planeMat);
+	            const cascadePlane = new three.Mesh(new three.PlaneGeometry(), planeMat);
 	            const shadowLineGroup = new three.Group();
 	            const shadowLine = new three.Box3Helper(new three.Box3(), new three.Color(0xffff00));
 	            shadowLineGroup.add(shadowLine);
