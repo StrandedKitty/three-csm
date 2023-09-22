@@ -257,6 +257,8 @@ class CSM {
 			const shadowCam = light.shadow.camera;
 			const texelWidth = ( shadowCam.right - shadowCam.left ) / this.shadowMapSize;
 			const texelHeight = ( shadowCam.top - shadowCam.bottom ) / this.shadowMapSize;
+			shadowCam.far = this.lightFar;
+			shadowCam.near = this.lightNear;
 			light.shadow.camera.updateMatrixWorld( true );
 			_cameraToLightMatrix.multiplyMatrices( light.shadow.camera.matrixWorldInverse, camera.matrixWorld );
 			frustums[ i ].toSpace( _cameraToLightMatrix, _lightSpaceFrustum );
