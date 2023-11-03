@@ -190,28 +190,7 @@
 				gui.add( params, 'margin', 0, 200 ).name( 'light margin' ).onChange( function ( value ) {
 
 					csm.lightMargin = value;
-
-				} );
-
-				gui.add( params, 'lightNear', 1, 10000 ).name( 'light near' ).onChange( function ( value ) {
-
-					for ( var i = 0; i < csm.lights.length; i ++ ) {
-
-						csm.lights[ i ].shadow.camera.near = value;
-						csm.lights[ i ].shadow.camera.updateProjectionMatrix();
-
-					}
-
-				} );
-
-				gui.add( params, 'lightFar', 1, 10000 ).name( 'light far' ).onChange( function ( value ) {
-
-					for ( var i = 0; i < csm.lights.length; i ++ ) {
-
-						csm.lights[ i ].shadow.camera.far = value;
-						csm.lights[ i ].shadow.camera.updateProjectionMatrix();
-
-					}
+					csm.updateFrustums();
 
 				} );
 

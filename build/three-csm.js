@@ -4,8 +4,9 @@
 	(global = typeof globalThis !== 'undefined' ? globalThis : global || self, (global.THREE = global.THREE || {}, global.THREE.CSM = factory(global.THREE)));
 })(this, (function (three) { 'use strict';
 
+	const lightParsBeginInitial = three.ShaderChunk.lights_pars_begin;
 	const CSMShader = {
-	    lights_fragment_begin: (csm) => /* glsl */ `
+	    lights_fragment_begin: (cascades) => /* glsl */ `
 GeometricContext geometry;
 
 geometry.position = - vViewPosition;
@@ -98,7 +99,7 @@ IncidentLight directLight;
 			// NOTE: Depth gets larger away from the camera.
 			// cascade.x is closer, cascade.y is further
 
-				#if ( UNROLLED_LOOP_INDEX < ${csm.cascades} )
+				#if ( UNROLLED_LOOP_INDEX < ${cascades} )
 
 					// NOTE: Apply CSM shadows
 
@@ -158,7 +159,7 @@ IncidentLight directLight;
 
 			#if defined( USE_SHADOWMAP ) && ( UNROLLED_LOOP_INDEX < NUM_DIR_LIGHT_SHADOWS ) 
 
-				#if ( UNROLLED_LOOP_INDEX < ${csm.cascades} )
+				#if ( UNROLLED_LOOP_INDEX < ${cascades} )
 
 					// NOTE: Apply CSM shadows
 
@@ -275,13 +276,13 @@ IncidentLight directLight;
 
 #endif
 `,
-	    lights_pars_begin: () => /* glsl */ `
+	    lights_pars_begin: (maxCascades) => /* glsl */ `
 #if defined( USE_CSM ) && defined( CSM_CASCADES )
-uniform vec2 CSM_cascades[CSM_CASCADES];
+uniform vec2 CSM_cascades[${maxCascades}]; // This value is the max. number supported of cascades
 uniform float cameraNear;
 uniform float shadowFar;
 #endif
-	` + three.ShaderChunk.lights_pars_begin
+	` + lightParsBeginInitial
 	};
 
 	class CSMHelper extends three.Group {
@@ -509,16 +510,19 @@ uniform float shadowFar;
 	    }
 	    target.push(1);
 	}
+	const _origin = new three.Vector3(0, 0, 0);
+	const _lightOrientationMatrix = new three.Matrix4();
+	const _lightOrientationMatrixInverse = new three.Matrix4();
+	const _cameraToLightParentMatrix = new three.Matrix4();
 	const _cameraToLightMatrix = new three.Matrix4();
 	const _lightSpaceFrustum = new CSMFrustum();
 	const _center = new three.Vector3();
 	const _bbox = new three.Box3();
 	const _uniformArray = [];
 	const _logArray = [];
-	let _shaderCodeInjected = false;
 	class CSM {
 	    constructor(data) {
-	        this.fade = false;
+	        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
 	        this.mainFrustum = new CSMFrustum();
 	        this.frustums = [];
 	        this.breaks = [];
@@ -526,17 +530,20 @@ uniform float shadowFar;
 	        this.shaders = new Map();
 	        this.camera = data.camera;
 	        this.parent = data.parent;
-	        this.cascades = data.cascades || 3;
-	        this.maxFar = data.maxFar || 100000;
-	        this.mode = data.mode || 'practical';
-	        this.shadowMapSize = data.shadowMapSize || 2048;
-	        this.shadowBias = data.shadowBias || 0;
-	        this.lightDirection = data.lightDirection || new three.Vector3(1, -1, 1).normalize();
-	        this.lightIntensity = data.lightIntensity || 1;
-	        this.lightColor = data.lightColor || new three.Color(0xffffff);
-	        this.lightNear = data.lightNear || 1;
-	        this.lightFar = data.lightFar || 2000;
-	        this.lightMargin = data.lightMargin || 200;
+	        this.cascades = (_a = data.cascades) !== null && _a !== void 0 ? _a : 3;
+	        this.maxCascades = (_b = data.maxCascades) !== null && _b !== void 0 ? _b : data.cascades;
+	        this.maxFar = (_c = data.maxFar) !== null && _c !== void 0 ? _c : 100000;
+	        this.mode = (_d = data.mode) !== null && _d !== void 0 ? _d : 'practical';
+	        this.practicalModeLambda = (_e = data.practicalModeLambda) !== null && _e !== void 0 ? _e : 0.5;
+	        this.shadowMapSize = (_f = data.shadowMapSize) !== null && _f !== void 0 ? _f : 2048;
+	        this.shadowBias = (_g = data.shadowBias) !== null && _g !== void 0 ? _g : 0;
+	        this.shadowNormalBias = (_h = data.shadowNormalBias) !== null && _h !== void 0 ? _h : 0;
+	        this.lightDirection = (_j = data.lightDirection) !== null && _j !== void 0 ? _j : new three.Vector3(1, -1, 1).normalize();
+	        this.lightDirectionUp = (_k = data.lightDirectionUp) !== null && _k !== void 0 ? _k : three.Object3D.DEFAULT_UP;
+	        this.lightIntensity = (_l = data.lightIntensity) !== null && _l !== void 0 ? _l : 1;
+	        this.lightColor = (_m = data.lightColor) !== null && _m !== void 0 ? _m : new three.Color(0xffffff);
+	        this.lightMargin = (_o = data.lightMargin) !== null && _o !== void 0 ? _o : 200;
+	        this.fade = (_p = data.fade) !== null && _p !== void 0 ? _p : false;
 	        this.customSplitsCallback = data.customSplitsCallback;
 	        this.createLights();
 	        this.updateFrustums();
@@ -548,8 +555,8 @@ uniform float shadowFar;
 	            light.castShadow = true;
 	            light.shadow.mapSize.width = this.shadowMapSize;
 	            light.shadow.mapSize.height = this.shadowMapSize;
-	            light.shadow.camera.near = this.lightNear;
-	            light.shadow.camera.far = this.lightFar;
+	            light.shadow.camera.near = 0;
+	            light.shadow.camera.far = 1;
 	            this.parent.add(light.target);
 	            this.lights.push(light);
 	        }
@@ -561,9 +568,8 @@ uniform float shadowFar;
 	        }
 	    }
 	    initCascades() {
-	        const camera = this.camera;
-	        camera.updateProjectionMatrix();
-	        this.mainFrustum.setFromProjectionMatrix(camera.projectionMatrix, this.maxFar);
+	        this.camera.updateProjectionMatrix();
+	        this.mainFrustum.setFromProjectionMatrix(this.camera.projectionMatrix, this.maxFar);
 	        this.mainFrustum.split(this.breaks, this.frustums);
 	    }
 	    updateShadowBounds() {
@@ -598,8 +604,11 @@ uniform float shadowFar;
 	            shadowCam.right = squaredBBWidth / 2;
 	            shadowCam.top = squaredBBWidth / 2;
 	            shadowCam.bottom = -squaredBBWidth / 2;
+	            shadowCam.near = 0;
+	            shadowCam.far = squaredBBWidth + this.lightMargin;
 	            shadowCam.updateProjectionMatrix();
 	            light.shadow.bias = this.shadowBias * squaredBBWidth;
+	            light.shadow.normalBias = this.shadowNormalBias * squaredBBWidth;
 	        }
 	    }
 	    updateBreaks() {
@@ -614,26 +623,30 @@ uniform float shadowFar;
 	                logarithmicSplit(this.cascades, camera.near, far, this.breaks);
 	                break;
 	            case 'practical':
-	                practicalSplit(this.cascades, camera.near, far, 0.5, this.breaks);
+	                practicalSplit(this.cascades, camera.near, far, this.practicalModeLambda, this.breaks);
 	                break;
 	            case 'custom':
-	                if (this.customSplitsCallback === undefined)
-	                    console.error('CSM: Custom split scheme callback not defined.');
+	                if (this.customSplitsCallback === undefined) {
+	                    throw new Error('CSM: Custom split scheme callback not defined.');
+	                }
 	                this.breaks.push(...this.customSplitsCallback(this.cascades, camera.near, far));
 	                break;
 	        }
 	    }
 	    update() {
-	        const camera = this.camera;
-	        const frustums = this.frustums;
-	        for (let i = 0; i < frustums.length; i++) {
+	        for (let i = 0; i < this.frustums.length; i++) {
 	            const light = this.lights[i];
 	            const shadowCam = light.shadow.camera;
 	            const texelWidth = (shadowCam.right - shadowCam.left) / this.shadowMapSize;
 	            const texelHeight = (shadowCam.top - shadowCam.bottom) / this.shadowMapSize;
-	            light.shadow.camera.updateMatrixWorld(true);
-	            _cameraToLightMatrix.multiplyMatrices(light.shadow.camera.matrixWorldInverse, camera.matrixWorld);
-	            frustums[i].toSpace(_cameraToLightMatrix, _lightSpaceFrustum);
+	            // This matrix only represents sun orientation, origin is zero
+	            _lightOrientationMatrix.lookAt(_origin, this.lightDirection, this.lightDirectionUp);
+	            _lightOrientationMatrixInverse.copy(_lightOrientationMatrix).invert();
+	            // Go from camera space to world space using camera.matrixWorld, then go to parent space using inverse of parent.matrixWorld
+	            _cameraToLightParentMatrix.copy(this.parent.matrixWorld).invert().multiply(this.camera.matrixWorld);
+	            // Go from camera space to light parent space, then apply light orientation
+	            _cameraToLightMatrix.multiplyMatrices(_lightOrientationMatrixInverse, _cameraToLightParentMatrix);
+	            this.frustums[i].toSpace(_cameraToLightMatrix, _lightSpaceFrustum);
 	            const nearVerts = _lightSpaceFrustum.vertices.near;
 	            const farVerts = _lightSpaceFrustum.vertices.far;
 	            _bbox.makeEmpty();
@@ -643,9 +656,12 @@ uniform float shadowFar;
 	            }
 	            _bbox.getCenter(_center);
 	            _center.z = _bbox.max.z + this.lightMargin;
+	            // Round X and Y to avoid shadow shimmering when moving or rotating the camera
 	            _center.x = Math.floor(_center.x / texelWidth) * texelWidth;
 	            _center.y = Math.floor(_center.y / texelHeight) * texelHeight;
-	            _center.applyMatrix4(light.shadow.camera.matrixWorld);
+	            // Center is currently in light space, so we need to go back to light parent space
+	            _center.applyMatrix4(_lightOrientationMatrix);
+	            // New positions are relative to this.parent
 	            light.position.copy(_center);
 	            light.target.position.copy(_center);
 	            light.target.position.x += this.lightDirection.x;
@@ -654,29 +670,25 @@ uniform float shadowFar;
 	        }
 	    }
 	    injectInclude() {
-	        if (!_shaderCodeInjected) {
-	            three.ShaderChunk.lights_fragment_begin = CSMShader.lights_fragment_begin(this);
-	            three.ShaderChunk.lights_pars_begin = CSMShader.lights_pars_begin();
-	            _shaderCodeInjected = true;
-	        }
+	        three.ShaderChunk.lights_fragment_begin = CSMShader.lights_fragment_begin(this.cascades);
+	        three.ShaderChunk.lights_pars_begin = CSMShader.lights_pars_begin(this.maxCascades);
 	    }
 	    setupMaterial(material) {
-	        material.defines = material.defines || {};
-	        material.defines.USE_CSM = 1;
-	        material.defines.CSM_CASCADES = this.cascades;
-	        if (this.fade) {
-	            material.defines.CSM_FADE = '';
-	        }
-	        const breaksVec2 = [];
-	        const shaders = this.shaders;
-	        shaders.set(material, null);
 	        const fn = (shader) => {
+	            const breaksVec2 = this.getExtendedBreaks();
 	            const far = Math.min(this.camera.far, this.maxFar);
-	            this.getExtendedBreaks(breaksVec2);
 	            shader.uniforms.CSM_cascades = { value: breaksVec2 };
-	            shader.uniforms.cameraNear = { value: this.camera.near };
+	            shader.uniforms.cameraNear = { value: Math.min(this.maxFar, this.camera.near) };
 	            shader.uniforms.shadowFar = { value: far };
-	            shaders.set(material, shader);
+	            material.defines = material.defines || {};
+	            material.defines.USE_CSM = 1;
+	            material.defines.CSM_CASCADES = this.cascades;
+	            material.defines.CSM_FADE = this.fade ? '' : undefined;
+	            material.needsUpdate = true;
+	            this.shaders.set(material, shader);
+	            material.addEventListener('dispose', () => {
+	                this.shaders.delete(material);
+	            });
 	        };
 	        if (!material.onBeforeCompile) {
 	            material.onBeforeCompile = fn;
@@ -691,35 +703,37 @@ uniform float shadowFar;
 	    }
 	    updateUniforms() {
 	        const far = Math.min(this.camera.far, this.maxFar);
-	        const shaders = this.shaders;
-	        shaders.forEach(function (shader, material) {
+	        const breaks = this.getExtendedBreaks();
+	        this.shaders.forEach((shader, material) => {
 	            if (shader !== null) {
 	                const uniforms = shader.uniforms;
-	                this.getExtendedBreaks(uniforms.CSM_cascades.value);
-	                uniforms.cameraNear.value = this.camera.near;
+	                uniforms.CSM_cascades.value = breaks;
+	                uniforms.cameraNear.value = Math.min(this.maxFar, this.camera.near);
 	                uniforms.shadowFar.value = far;
 	            }
-	            if (!this.fade && 'CSM_FADE' in material.defines) {
-	                delete material.defines.CSM_FADE;
+	            let definesChanged = false;
+	            const fadeValue = this.fade ? '' : undefined;
+	            if (material.defines.CSM_FADE !== fadeValue) {
+	                material.defines.CSM_FADE = fadeValue;
+	                definesChanged = true;
+	            }
+	            if (material.defines.CSM_CASCADES !== this.cascades) {
+	                material.defines.CSM_CASCADES = this.cascades;
+	                definesChanged = true;
+	            }
+	            if (definesChanged) {
 	                material.needsUpdate = true;
 	            }
-	            else if (this.fade && !('CSM_FADE' in material.defines)) {
-	                material.defines.CSM_FADE = '';
-	                material.needsUpdate = true;
-	            }
-	        }, this);
+	        });
 	    }
-	    getExtendedBreaks(target) {
-	        while (target.length < this.breaks.length) {
-	            target.push(new three.Vector2());
-	        }
-	        target.length = this.breaks.length;
-	        for (let i = 0; i < this.cascades; i++) {
-	            const amount = this.breaks[i];
+	    getExtendedBreaks() {
+	        const target = [];
+	        for (let i = 0; i < 4; i++) {
+	            const amount = this.breaks[i] || 0;
 	            const prev = this.breaks[i - 1] || 0;
-	            target[i].x = prev;
-	            target[i].y = amount;
+	            target.push(new three.Vector2(prev, amount));
 	        }
+	        return target;
 	    }
 	    updateFrustums() {
 	        this.updateBreaks();
@@ -727,14 +741,33 @@ uniform float shadowFar;
 	        this.updateShadowBounds();
 	        this.updateUniforms();
 	    }
-	    remove() {
+	    updateCascades(cascades) {
+	        this.cascades = cascades;
+	        for (const light of this.lights) {
+	            this.parent.remove(light);
+	            light.dispose();
+	        }
+	        this.lights.length = 0;
+	        this.createLights();
+	        this.injectInclude();
+	        this.updateFrustums();
+	    }
+	    updateShadowMapSize(size) {
+	        this.shadowMapSize = size;
 	        for (let i = 0; i < this.lights.length; i++) {
-	            this.parent.remove(this.lights[i]);
+	            const light = this.lights[i];
+	            light.shadow.mapSize.width = size;
+	            light.shadow.mapSize.height = size;
+	            if (light.shadow.map) {
+	                // Dispose old shadow map so that three.js automatically creates a new one using the updated
+	                // mapSize dimensions. See https://stackoverflow.com/a/31858963/8886455
+	                light.shadow.map.dispose();
+	                light.shadow.map = null;
+	            }
 	        }
 	    }
 	    dispose() {
-	        const shaders = this.shaders;
-	        shaders.forEach(function (shader, material) {
+	        this.shaders.forEach(function (shader, material) {
 	            delete material.onBeforeCompile;
 	            delete material.defines.USE_CSM;
 	            delete material.defines.CSM_CASCADES;
@@ -746,11 +779,11 @@ uniform float shadowFar;
 	            }
 	            material.needsUpdate = true;
 	        });
-	        shaders.clear();
+	        this.shaders.clear();
 	        for (let i = 0; i < this.lights.length; i++) {
 	            this.lights[i].dispose();
+	            this.parent.remove(this.lights[i]);
 	        }
-	        this.remove();
 	    }
 	}
 	CSM.Helper = CSMHelper;

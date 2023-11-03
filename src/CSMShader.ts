@@ -1,8 +1,9 @@
 import { ShaderChunk } from 'three';
-import CSM from './CSM';
+
+const lightParsBeginInitial = ShaderChunk.lights_pars_begin;
 
 const CSMShader = {
-	lights_fragment_begin: ( csm: CSM ) => /* glsl */`
+	lights_fragment_begin: ( cascades: number ) => /* glsl */`
 GeometricContext geometry;
 
 geometry.position = - vViewPosition;
@@ -95,7 +96,7 @@ IncidentLight directLight;
 			// NOTE: Depth gets larger away from the camera.
 			// cascade.x is closer, cascade.y is further
 
-				#if ( UNROLLED_LOOP_INDEX < ${csm.cascades} )
+				#if ( UNROLLED_LOOP_INDEX < ${cascades} )
 
 					// NOTE: Apply CSM shadows
 
@@ -155,7 +156,7 @@ IncidentLight directLight;
 
 			#if defined( USE_SHADOWMAP ) && ( UNROLLED_LOOP_INDEX < NUM_DIR_LIGHT_SHADOWS ) 
 
-				#if ( UNROLLED_LOOP_INDEX < ${csm.cascades} )
+				#if ( UNROLLED_LOOP_INDEX < ${cascades} )
 
 					// NOTE: Apply CSM shadows
 
@@ -272,13 +273,13 @@ IncidentLight directLight;
 
 #endif
 `,
-	lights_pars_begin: () => /* glsl */`
+	lights_pars_begin: ( maxCascades: number ) => /* glsl */`
 #if defined( USE_CSM ) && defined( CSM_CASCADES )
-uniform vec2 CSM_cascades[CSM_CASCADES];
+uniform vec2 CSM_cascades[${maxCascades}]; // This value is the max. number supported of cascades
 uniform float cameraNear;
 uniform float shadowFar;
 #endif
-	` + ShaderChunk.lights_pars_begin
+	` + lightParsBeginInitial
 };
 
 export default CSMShader;

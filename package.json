@@ -8,6 +8,7 @@
 	"scripts": {
 		"build": "rollup -c --bundleConfigAsCjs",
 		"dev": "concurrently \"ws\" \"rollup -c -w --bundleConfigAsCjs\"",
+		"lint": "eslint src --fix",
 		"server": "ws"
 	},
 	"repository": {

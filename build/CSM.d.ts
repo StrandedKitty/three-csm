@@ -6,31 +6,36 @@ export interface CSMParams {
     camera: PerspectiveCamera | OrthographicCamera;
     parent: Object3D;
     cascades?: number;
+    maxCascades?: number;
     maxFar?: number;
     mode?: 'uniform' | 'logarithmic' | 'practical' | 'custom';
+    practicalModeLambda?: number;
+    customSplitsCallback?: CustomSplitsCallbackType;
     shadowMapSize?: number;
     shadowBias?: number;
-    lightDirection?: Vector3;
+    shadowNormalBias?: number;
     lightIntensity?: number;
     lightColor?: Color;
-    lightNear?: number;
-    lightFar?: number;
+    lightDirection?: Vector3;
+    lightDirectionUp?: Vector3;
     lightMargin?: number;
-    customSplitsCallback?: CustomSplitsCallbackType;
+    fade?: boolean;
 }
 declare class CSM {
     camera: PerspectiveCamera | OrthographicCamera;
     parent: Object3D;
     cascades: number;
+    maxCascades: number;
     maxFar: number;
     mode: string;
+    practicalModeLambda: number;
     shadowMapSize: number;
     shadowBias: number;
+    shadowNormalBias: number;
     lightDirection: Vector3;
+    lightDirectionUp: Vector3;
     lightIntensity: number;
     lightColor: Color;
-    lightNear: number;
-    lightFar: number;
     lightMargin: number;
     customSplitsCallback: CustomSplitsCallbackType;
     fade: boolean;
@@ -50,7 +55,8 @@ declare class CSM {
     private updateUniforms;
     private getExtendedBreaks;
     updateFrustums(): void;
-    remove(): void;
+    updateCascades(cascades: number): void;
+    updateShadowMapSize(size: number): void;
     dispose(): void;
     static Helper: typeof CSMHelper;
 }
