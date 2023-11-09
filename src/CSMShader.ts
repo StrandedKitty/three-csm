@@ -78,7 +78,7 @@ IncidentLight directLight;
 	DirectionalLightShadow directionalLightShadow;
 	#endif
 
-	#if defined( USE_SHADOWMAP ) && defined( CSM_FADE )
+	#if defined( USE_SHADOWMAP ) && defined( CSM_FADE ) && CSM_FADE == 1
 	vec2 cascade;
 	float cascadeCenter;
 	float closestEdge;

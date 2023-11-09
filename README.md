@@ -111,6 +111,8 @@ csm.update(camera.matrix);
 
 	- `settings.fade` — If `true`, enables smooth transition between cascades. Optional.
 
+	- `settings.noLastCascadeCutOff` — If `true`, disables cutting off the last cascade for better shadow coverage. Optional.
+
 ### `setupMaterial(material: THREE.Material)`
 
 Updates defines and uniforms of passed material. Should be called for every material which must use CSMs.

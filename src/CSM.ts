@@ -89,6 +89,7 @@ export interface CSMParams {
 	lightDirectionUp?: Vector3;
 	lightMargin?: number;
 	fade?: boolean;
+	noLastCascadeCutOff?: boolean;
 }
 
 class CSM {
@@ -110,6 +111,7 @@ class CSM {
 	public lightMargin: number;
 	public customSplitsCallback: CustomSplitsCallbackType;
 	public fade: boolean;
+	public noLastCascadeCutOff: boolean;
 	public mainFrustum: CSMFrustum = new CSMFrustum();
 	public frustums: CSMFrustum[] = [];
 	public breaks: number[] = [];
@@ -134,6 +136,7 @@ class CSM {
 		this.lightColor = data.lightColor ?? new Color( 0xffffff );
 		this.lightMargin = data.lightMargin ?? 200;
 		this.fade = data.fade ?? false;
+		this.noLastCascadeCutOff = data.noLastCascadeCutOff ?? false;
 		this.customSplitsCallback = data.customSplitsCallback;
 
 		this.createLights();
@@ -336,7 +339,7 @@ class CSM {
 			material.defines = material.defines || {};
 			material.defines.USE_CSM = 1;
 			material.defines.CSM_CASCADES = this.cascades;
-			material.defines.CSM_FADE = this.fade ? '' : undefined;
+			material.defines.CSM_FADE = this.fade ? '1' : '0';
 
 			material.needsUpdate = true;
 
@@ -388,7 +391,7 @@ class CSM {
 
 			let definesChanged = false;
 
-			const fadeValue = this.fade ? '' : undefined;
+			const fadeValue = this.fade ? '0' : '1';
 			if ( material.defines.CSM_FADE !== fadeValue ) {
 
 				material.defines.CSM_FADE = fadeValue;
@@ -417,11 +420,17 @@ class CSM {
 
 		const target: Vector2[] = [];
 
-		for ( let i = 0; i < 4; i ++ ) {
+		for ( let i = 0; i < this.maxCascades; i ++ ) {
 
 			const amount = this.breaks[ i ] || 0;
 			const prev = this.breaks[ i - 1 ] || 0;
 			target.push( new Vector2( prev, amount ) );
+
+		}
+
+		if ( this.noLastCascadeCutOff ) {
+
+			target[ this.breaks.length - 1 ].y = Infinity;
 
 		}
 

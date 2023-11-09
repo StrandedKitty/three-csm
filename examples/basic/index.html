@@ -95,10 +95,9 @@
 					shadowMapSize: 1024,
 					lightDirection: new THREE.Vector3( params.lightX, params.lightY, params.lightZ ).normalize(),
 					camera: camera,
-					shadowBias: params.shadowBias
+					shadowBias: params.shadowBias,
+					fade: true,
 				} );
-
-				csm.fade = true;
 
 				csmHelper = new THREE.CSM.Helper(csm);
 				csmHelper.visible = false;
@@ -144,13 +143,6 @@
 				gui.add( params, 'orthographic' ).onChange( function ( value ) {
 
 					csm.camera = value ? orthoCamera : camera;
-					csm.updateFrustums();
-
-				} );
-
-				gui.add( params, 'fade' ).onChange( function ( value ) {
-
-					csm.fade = value;
 					csm.updateFrustums();
 
 				} );

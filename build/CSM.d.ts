@@ -20,6 +20,7 @@ export interface CSMParams {
     lightDirectionUp?: Vector3;
     lightMargin?: number;
     fade?: boolean;
+    noLastCascadeCutOff?: boolean;
 }
 declare class CSM {
     camera: PerspectiveCamera | OrthographicCamera;
@@ -39,6 +40,7 @@ declare class CSM {
     lightMargin: number;
     customSplitsCallback: CustomSplitsCallbackType;
     fade: boolean;
+    noLastCascadeCutOff: boolean;
     mainFrustum: CSMFrustum;
     frustums: CSMFrustum[];
     breaks: number[];

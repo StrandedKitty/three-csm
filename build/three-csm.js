@@ -81,7 +81,7 @@ IncidentLight directLight;
 	DirectionalLightShadow directionalLightShadow;
 	#endif
 
-	#if defined( USE_SHADOWMAP ) && defined( CSM_FADE )
+	#if defined( USE_SHADOWMAP ) && defined( CSM_FADE ) && CSM_FADE == 1
 	vec2 cascade;
 	float cascadeCenter;
 	float closestEdge;
@@ -522,7 +522,7 @@ uniform float shadowFar;
 	const _logArray = [];
 	class CSM {
 	    constructor(data) {
-	        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p;
+	        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
 	        this.mainFrustum = new CSMFrustum();
 	        this.frustums = [];
 	        this.breaks = [];
@@ -544,6 +544,7 @@ uniform float shadowFar;
 	        this.lightColor = (_m = data.lightColor) !== null && _m !== void 0 ? _m : new three.Color(0xffffff);
 	        this.lightMargin = (_o = data.lightMargin) !== null && _o !== void 0 ? _o : 200;
 	        this.fade = (_p = data.fade) !== null && _p !== void 0 ? _p : false;
+	        this.noLastCascadeCutOff = (_q = data.noLastCascadeCutOff) !== null && _q !== void 0 ? _q : false;
 	        this.customSplitsCallback = data.customSplitsCallback;
 	        this.createLights();
 	        this.updateFrustums();
@@ -683,7 +684,7 @@ uniform float shadowFar;
 	            material.defines = material.defines || {};
 	            material.defines.USE_CSM = 1;
 	            material.defines.CSM_CASCADES = this.cascades;
-	            material.defines.CSM_FADE = this.fade ? '' : undefined;
+	            material.defines.CSM_FADE = this.fade ? '1' : '0';
 	            material.needsUpdate = true;
 	            this.shaders.set(material, shader);
 	            material.addEventListener('dispose', () => {
@@ -712,7 +713,7 @@ uniform float shadowFar;
 	                uniforms.shadowFar.value = far;
 	            }
 	            let definesChanged = false;
-	            const fadeValue = this.fade ? '' : undefined;
+	            const fadeValue = this.fade ? '0' : '1';
 	            if (material.defines.CSM_FADE !== fadeValue) {
 	                material.defines.CSM_FADE = fadeValue;
 	                definesChanged = true;
@@ -728,10 +729,13 @@ uniform float shadowFar;
 	    }
 	    getExtendedBreaks() {
 	        const target = [];
-	        for (let i = 0; i < 4; i++) {
+	        for (let i = 0; i < this.maxCascades; i++) {
 	            const amount = this.breaks[i] || 0;
 	            const prev = this.breaks[i - 1] || 0;
 	            target.push(new three.Vector2(prev, amount));
+	        }
+	        if (this.noLastCascadeCutOff) {
+	            target[this.breaks.length - 1].y = Infinity;
 	        }
 	        return target;
 	    }
