@@ -565,7 +565,6 @@ class CSM {
         }
     }
     initCascades() {
-        this.camera.updateProjectionMatrix();
         this.mainFrustum.setFromProjectionMatrix(this.camera.projectionMatrix, this.maxFar);
         this.mainFrustum.split(this.breaks, this.frustums);
     }
